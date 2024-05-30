@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="main.css" />
+    <title>Document</title>
+  </head>
+  <body>
+    <!-- 引用别的 html 文件 -->
+    <%- include ('header.html')%> <%= nowTime%>
+
+    <div>
+      <button onclick="add()">增</button>
+      <button onclick="del()">删</button>
+      <button onclick="edit()">改</button>
+      <button onclick="show()">查</button>
+    </div>
+
+    <h1>你好，我是陈伟 <%= id%> <%= username%></h1>
+
+    <script>
+      const add = () =>
+        fetch('/add', {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json',
+          },
+        })
+      const del = () =>
+        fetch('/del', {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json',
+          },
+        })
+      const edit = () =>
+        fetch('/edit', {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json',
+          },
+        })
+      const show = () =>
+        fetch('/show', {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json',
+          },
+        })
+    </script>
+  </body>
+</html>
