@@ -11,6 +11,15 @@ class Test2Controller extends Controller {
       req: ctx.request,
     }
   }
+
+  async newResponse() {
+    const { ctx} = this
+    ctx.response.token = 'chenWei0806'
+
+    const testBase64 = ctx.helper.base64Encode('chenW')
+
+    ctx.body = testBase64
+  }
 }
 
 module.exports = Test2Controller

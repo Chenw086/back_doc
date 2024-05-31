@@ -26,5 +26,6 @@ module.exports = app => {
   router.get('/newContext', controller.chen.newContext)
 
   // res req 的扩展
-  router.get('/reqResExtend', controller.test1.index)
+  router.post('/reqResExtend', controller.test1.index)
+  router.post('/resExtend', controller.test1.newResponse)
 }
