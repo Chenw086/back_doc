@@ -27,7 +27,7 @@ mysql> SELECT 100, 100 + 0, 100 - 0, 100 + 50, 100 + 50 -30, 100 + 35.5, 100 - 3
 4. mysql 中 + 只表示数值相加
 5. 如果遇到非数值类型，会尝试转换成数值，如果转换失败，就按照 0 计算
 6. mysql 中字符串拼接使用字符串函数（concat() 实现）
-:::
+   :::
 
 **乘除**
 
@@ -45,13 +45,13 @@ DIV 0 |
 
 ::: info
 
-1. 一个数乘以整数1和除以整数1后仍得原数
-2. 一个数乘以浮点数1和除以浮点数1后变成浮点数，数值与原数相等
+1. 一个数乘以整数 1 和除以整数 1 后仍得原数
+2. 一个数乘以浮点数 1 和除以浮点数 1 后变成浮点数，数值与原数相等
 3. 一个数除以整数后，不管是否能除尽，结果都为一个浮点数
-4. 一个数除以另一个数，除不尽时，结果为一个浮点数，并保留到小数点后4位
+4. 一个数除以另一个数，除不尽时，结果为一个浮点数，并保留到小数点后 4 位
 5. 乘法和除法的优先级相同，进行先乘后除操作与先除后乘操作，得出的结果相同
-6. 在数学运算中，0不能用作除数，在MySQL中，一个数除以0为NULL
-:::
+6. 在数学运算中，0 不能用作除数，在 MySQL 中，一个数除以 0 为 NULL
+   :::
 
 **求余**
 
@@ -73,3 +73,378 @@ WHERE employee_id MOD 2 = 0;
 ```
 
 ## 比较运算符
+
+比较运算符用来对表达式左边和右边的操作数进行比较，结果为真则返回 1，结果为假则返回 0，其余情况返回 null
+
+::: code-group
+
+```bash [=]
+mysql> SELECT 1 = 1, 1 = '1', 1 = 0, 'a' = 'a', (5 + 3) = (2 + 6), '' = NULL , NULL =
+    -> NULL;
++-------+---------+-------+-----------+-------------------+-----------+-------------+
+| 1 = 1 | 1 = '1' | 1 = 0 | 'a' = 'a' | (5 + 3) = (2 + 6) | '' = NULL | NULL = NULL |
++-------+---------+-------+-----------+-------------------+-----------+-------------+
+|     1 |       1 |     0 |         1 |                 1 |      NULL |        NULL |
++-------+---------+-------+-----------+-------------------+-----------+-------------+
+1 row in set (0.00 sec)
+
+```
+
+```bash [<=>]
+mysql> SELECT 1 <=> '1', 1 <=> 0, 'a' <=> 'a', (5 + 3) <=> (2 + 6), '' <=> NULL,NULL
+    -> <=> NULL FROM dual;
++-----------+---------+-------------+---------------------+-------------+---------------+
+| 1 <=> '1' | 1 <=> 0 | 'a' <=> 'a' | (5 + 3) <=> (2 + 6) | '' <=> NULL | NULL <=> NULL |
++-----------+---------+-------------+---------------------+-------------+---------------+
+|         1 |       0 |           1 |                   1 |           0 |             1 |
++-----------+---------+-------------+---------------------+-------------+---------------+
+1 row in set (0.00 sec)
+
+```
+
+```bash [<> !=]
+mysql> SELECT 1 <> 1, 1 != 2, 'a' != 'b', (3+4) <> (2+6), 'a' != NULL, NULL <> NULL;
++--------+--------+------------+----------------+-------------+--------------+
+| 1 <> 1 | 1 != 2 | 'a' != 'b' | (3+4) <> (2+6) | 'a' != NULL | NULL <> NULL |
++--------+--------+------------+----------------+-------------+--------------+
+|      0 |      1 |          1 |              1 |        NULL |         NULL |
++--------+--------+------------+----------------+-------------+--------------+
+1 row in set (0.00 sec)
+
+```
+
+:::
+
+**空与非空运算符**
+
+::: code-group
+
+```bash [ISNULL / IS NULL]
+mysql> SELECT NULL IS NULL, ISNULL(NULL), ISNULL('a'), 1 IS NULL;
++--------------+--------------+-------------+-----------+
+| NULL IS NULL | ISNULL(NULL) | ISNULL('a') | 1 IS NULL |
++--------------+--------------+-------------+-----------+
+|            1 |            1 |           0 |         0 |
++--------------+--------------+-------------+-----------+
+1 row in set (0.00 sec)
+
+```
+
+```bash [IS NOT NULL]
+mysql> SELECT NULL IS NOT NULL, 'a' IS NOT NULL, 1 IS NOT NULL;
++------------------+-----------------+---------------+
+| NULL IS NOT NULL | 'a' IS NOT NULL | 1 IS NOT NULL |
++------------------+-----------------+---------------+
+|                0 |               1 |             1 |
++------------------+-----------------+---------------+
+1 row in set (0.00 sec)
+
+```
+
+:::
+
+**最小最大值**
+
+::: danger 注意
+当参数是整数或浮点数，进行简单值比较
+
+当参数为字符串，根据字母表顺序比较
+
+当有 null 的时候，直接返回 null
+:::
+
+::: code-group
+
+```bash [LEAST]
+mysql> SELECT LEAST (1,0,2), LEAST('b','a','c'), LEAST(1,NULL,2);
++---------------+--------------------+-----------------+
+| LEAST (1,0,2) | LEAST('b','a','c') | LEAST(1,NULL,2) |
++---------------+--------------------+-----------------+
+|             0 | a                  |            NULL |
++---------------+--------------------+-----------------+
+1 row in set (0.00 sec)
+
+```
+
+```bash [GREATEST]
+mysql> SELECT GREATEST(1,0,2), GREATEST('b','a','c'), GREATEST(1,NULL,2);
++-----------------+-----------------------+--------------------+
+| GREATEST(1,0,2) | GREATEST('b','a','c') | GREATEST(1,NULL,2) |
++-----------------+-----------------------+--------------------+
+|               2 | c                     |               NULL |
++-----------------+-----------------------+--------------------+
+1 row in set (0.00 sec)
+
+```
+
+:::
+
+**区间**
+
+::: code-group
+
+```bash [BETWEEN AND]
+# BETWEEN运算符使用的格式通常为SELECT D FROM TABLE WHERE C BETWEEN A AND B，此时，当C大于或等于A，并且C小于或等于B时，结果为1，否则结果为0。
+
+mysql> SELECT 1 BETWEEN 0 AND 1, 10 BETWEEN 11 AND 12, 'b' BETWEEN 'a' AND 'c';
++-------------------+----------------------+-------------------------+
+| 1 BETWEEN 0 AND 1 | 10 BETWEEN 11 AND 12 | 'b' BETWEEN 'a' AND 'c' |
++-------------------+----------------------+-------------------------+
+|                 1 |                    0 |                       1 |
++-------------------+----------------------+-------------------------+
+1 row in set (0.00 sec)
+
+```
+
+```bash [IN]
+# 于判断给定的值是否是IN列表中的一个值，如果是则返回1，否则返回0。如果给定的值为NULL，或者IN列表中存在NULL，则结果为NULL
+
+mysql> SELECT 'a' IN ('a','b','c'), 1 IN (2,3), NULL IN ('a','b'), 'a' IN ('a', NULL);
++----------------------+------------+-------------------+--------------------+
+| 'a' IN ('a','b','c') | 1 IN (2,3) | NULL IN ('a','b') | 'a' IN ('a', NULL) |
++----------------------+------------+-------------------+--------------------+
+|                    1 |          0 |              NULL |                  1 |
++----------------------+------------+-------------------+--------------------+
+1 row in set (0.00 sec)
+
+```
+
+```bash [NOT IN]
+# NOT IN运算符用于判断给定的值是否不是IN列表中的一个值，如果不是IN列表中的一个值，则返回1，否则返回0。
+
+mysql> SELECT 'a' NOT IN ('a','b','c'), 1 NOT IN (2,3);
++--------------------------+----------------+
+| 'a' NOT IN ('a','b','c') | 1 NOT IN (2,3) |
++--------------------------+----------------+
+|                        0 |              1 |
++--------------------------+----------------+
+1 row in set (0.00 sec)
+
+```
+
+:::
+
+**LIKE 运算符**
+
+主要用来匹配字符串，通常用于模糊匹配，如果满足条件则返回 1，否则返回 0。
+
+如果给定的值或匹配的条件为 NULL，则返回结果为 NULL
+
+::: code-group
+
+```bash
+“%”：匹配0个或多个字符。
+“_”：只能匹配一个字符。
+```
+
+```sql [%]
+SELECT first_name
+FROM employees
+WHERE first_name LIKE 'S%';
+```
+
+```sql [_]
+SELECT last_name
+FROM employees
+WHERE last_name LIKE '_o%';
+```
+
+:::
+
+- ESCAPE
+
+回避特殊符号的：使用转义符
+
+::: code-group
+
+```sql [默认情况]
+SELECT job_id
+FROM jobs
+WHERE job_id LIKE 'IT\_%';
+```
+
+```sql [自定义转义符]
+SELECT job_id
+FROM jobs
+WHERE job_id LIKE 'IT$_%' escape '$';
+```
+
+:::
+
+**REGEXP**
+
+用来匹配字符串。如果满足返回 1，否则返回 0.有 null 则返回 null
+
+```bash
+mysql> SELECT 'shkstart' REGEXP '^s', 'shkstart' REGEXP 't$', 'shkstart' REGEXP 'hk';
++------------------------+------------------------+------------------------+
+| 'shkstart' REGEXP '^s' | 'shkstart' REGEXP 't$' | 'shkstart' REGEXP 'hk' |
++------------------------+------------------------+------------------------+
+|                      1 |                      1 |                      1 |
++------------------------+------------------------+------------------------+
+1 row in set (0.00 sec)
+
+```
+
+## 逻辑运算符
+
+::: code-group
+
+```bash [NOT]
+mysql> SELECT NOT 1, NOT 0, NOT(1+1), NOT !1, NOT NULL;
++-------+-------+----------+--------+----------+
+| NOT 1 | NOT 0 | NOT(1+1) | NOT !1 | NOT NULL |
++-------+-------+----------+--------+----------+
+|     0 |     1 |        0 |      1 |     NULL |
++-------+-------+----------+--------+----------+
+1 row in set, 1 warning (0.00 sec)
+
+```
+
+```bash [AND &&]
+mysql>  SELECT 1 AND -1, 0 AND 1, 0 AND NULL, 1 AND NULL;
++----------+---------+------------+------------+
+| 1 AND -1 | 0 AND 1 | 0 AND NULL | 1 AND NULL |
++----------+---------+------------+------------+
+|        1 |       0 |          0 |       NULL |
++----------+---------+------------+------------+
+1 row in set (0.00 sec)
+
+```
+
+```bash [OR ||]
+mysql> SELECT 1 OR -1, 1 OR 0, 1 OR NULL, 0 || NULL, NULL || NULL;
++---------+--------+-----------+-----------+--------------+
+| 1 OR -1 | 1 OR 0 | 1 OR NULL | 0 || NULL | NULL || NULL |
++---------+--------+-----------+-----------+--------------+
+|       1 |      1 |         1 |      NULL |         NULL |
++---------+--------+-----------+-----------+--------------+
+1 row in set, 2 warnings (0.00 sec)
+
+```
+
+```bash [XOR]
+mysql> SELECT 1 XOR -1, 1 XOR 0, 0 XOR 0, 1 XOR NULL, 1 XOR 1 XOR 1, 0 XOR 0 XOR 0;
++----------+---------+---------+------------+---------------+---------------+
+| 1 XOR -1 | 1 XOR 0 | 0 XOR 0 | 1 XOR NULL | 1 XOR 1 XOR 1 | 0 XOR 0 XOR 0 |
++----------+---------+---------+------------+---------------+---------------+
+|        0 |       1 |       0 |       NULL |             1 |             0 |
++----------+---------+---------+------------+---------------+---------------+
+1 row in set (0.00 sec)
+
+```
+
+:::
+
+## 位运算符
+
+::: danger 说明
+目前没有遇到该使用场景
+
+后面需要再来补上
+:::
+
+## 练习
+
+选择工资不在 5000 到 12000 的员工的姓名和工资
+
+::: code-group
+
+```sql [方法 1]
+SELECT last_name, salary
+FROM employees
+WHERE salary < 5000 OR salary > 12000;
+```
+
+```sql [方法 2]
+SELECT last_name, salary
+FROM employees
+WHERE salary NOT BETWEEN 5000 AND 12000;
+```
+
+:::
+
+选择在 20 或 50 号部门工作的员工姓名和部门号
+
+::: code-group
+
+```sql [plan 1]
+SELECT last_name, department_id
+FROM employees
+WHERE department_id = 20 OR department_id = 50;
+```
+
+```sql [plan2]
+SELECT last_name, department_id
+FROM employees
+WHERE department_id IN(20, 50);
+```
+
+:::
+
+选择公司没有管理者员工的姓名与 JOB_ID
+
+```sql
+SELECT last_name, job_id
+FROM employees
+WHERE manager_id IS NULL;
+```
+
+选择公司中有奖金的员工姓名，工资和奖金级别
+
+```sql
+SELECT last_name, salary, commission_pct
+FROM employees
+WHERE commission_pct IS NOT NULL;
+```
+
+选员工姓名的第三个字母是 a 的员工姓名
+
+```sql
+SELECT last_name
+FROM employees
+WHERE last_name LIKE '__a%';
+```
+
+选择姓名中有字母 a 和 k 的员工姓名
+
+```sql
+SELECT last_name
+FROM employees
+WHERE last_name LIKE '%a%k%' OR last_name LIKE '%k%a%';
+```
+
+显示出表 employees 表中 first_name 以 'e'结尾的员工信息
+
+::: code-group
+
+```sql [plan 1]
+SELECT employee_id,first_name,last_name
+FROM employees
+WHERE first_name LIKE '%e';
+```
+
+```sql [plan 2]
+SELECT employee_id,first_name,last_name
+FROM employees
+WHERE first_name REGEXP 'e$';
+```
+
+:::
+
+显示出表 employees 部门编号在 80-100 之间的姓名、工种
+
+```sql
+SELECT last_name,job_id
+FROM employees
+-- where department_id in (80,90,100);
+WHERE department_id BETWEEN 80 AND 100;
+```
+
+显示出表 employees 的 manager_id 是 100,101,110 的员工姓名、工资、管理者id
+
+```sql
+SELECT last_name,salary,manager_id
+FROM employees
+WHERE manager_id IN (100,101,110);
+```

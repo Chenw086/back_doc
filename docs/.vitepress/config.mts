@@ -141,6 +141,7 @@ export default defineConfig({
 					items: [
 						{text: '查询', link: '/mysql/base/select'},
 						{text: '运算符', link: '/mysql/base/operator'},
+						{text: '排序与分页', link: '/mysql/base/orderLimit'},
 					]
 				}
 			],

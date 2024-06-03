@@ -28,10 +28,10 @@ DCL（Data Control Language）：用于定义数据库、表、字段、用户�
 2. 每条命令以 ; 或 \g 或 \G 结束
 3. 关键字不能被缩写也不能分行
 4. 关于标点符号
-    - ()、''、""、是成对结束
-    - 必须在英文状态的半角输入方式
-    - 字符串型和日期时间类型可以使用单引号 '' 表示
-    - 列的别名，尽量使用双引号 ""，而且不建议省略 as
+   - ()、''、""、是成对结束
+   - 必须在英文状态的半角输入方式
+   - 字符串型和日期时间类型可以使用单引号 '' 表示
+   - 列的别名，尽量使用双引号 ""，而且不建议省略 as
 
 **大小写规范**
 
@@ -59,7 +59,7 @@ DCL（Data Control Language）：用于定义数据库、表、字段、用户�
 **命名规则**
 
 1. 数据库、表名不得超过 30 个字符，变量名限制为 29 个
-2. 必须只能包含 A-Z,a-z,0-9,_ 共 63 个字符
+2. 必须只能包含 A-Z,a-z,0-9,\_ 共 63 个字符
 3. 数据库名、表名、字段名等对象中间不要包含括号
 4. 同一个 mysql 软件中，数据库不能同名；同库中表不能重名；同表中，同字段不能同名
 5. 必须保证字段没有和保留字、数据库系统或常用方法冲突。坚持使用则使用 `` 引起来
@@ -98,7 +98,7 @@ mysql> desc employees;
 ## 基本语法
 
 ::: danger
-除非使用所有数据，最好不要使用通配符 *
+除非使用所有数据，最好不要使用通配符 \*
 
 因为这样会降低查询效率
 
@@ -276,7 +276,7 @@ mysql> SELECT '陈伟' as corporation, last_name FROM employees;
 
 ### 练习
 
-查询 12个月的工资总和，并起名 ANNUAL SALARY
+查询 12 个月的工资总和，并起名 ANNUAL SALARY
 
 ```bash
 mysql> SELECT employee_id,last_name,salary * 12 * (1 + IFNULL(commission_pct,0)) "ANNUAL
@@ -298,7 +298,7 @@ SALARY |
 107 rows in set (0.01 sec)
 ```
 
-查询employees表中去除重复的job_id以后的数据
+查询 employees 表中去除重复的 job_id 以后的数据
 
 ```bash
 mysql> SELECT DISTINCT job_id
@@ -333,7 +333,7 @@ mysql> SELECT last_name, salary
 6 rows in set (0.00 sec)
 ```
 
-查询员工号为176的员工的姓名和部门号
+查询员工号为 176 的员工的姓名和部门号
 
 ```bash
 mysql> SELECT last_name, department_id
@@ -393,14 +393,14 @@ mysql> DESC employees;
 11 rows in set (0.00 sec)
 ```
 
-|字段|说明|
-|:--|--|
-|Field|字段名称|
-|Type|字段类型|
-|Null|表示该列是否可以存储 Null 值|
-|Key|该列是否已编制索引。PRI表示该列是表主键的一部分；UNI表示该列是UNIQUE索引的一部分；MUL表示在列中某个给定值允许出现多次。|
-|Default|该列是否有默认值。若有，那么值是多少|
-|Extra|可以获取的与给定列有关的附加信息。如：AUTO_INCREMENT|
+| 字段    | 说明                                                                                                                         |
+| :------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| Field   | 字段名称                                                                                                                     |
+| Type    | 字段类型                                                                                                                     |
+| Null    | 表示该列是否可以存储 Null 值                                                                                                 |
+| Key     | 该列是否已编制索引。PRI 表示该列是表主键的一部分；UNI 表示该列是 UNIQUE 索引的一部分；MUL 表示在列中某个给定值允许出现多次。 |
+| Default | 该列是否有默认值。若有，那么值是多少                                                                                         |
+| Extra   | 可以获取的与给定列有关的附加信息。如：AUTO_INCREMENT                                                                         |
 
 ## 过滤数据
 
@@ -427,3 +427,264 @@ mysql> SELECT employee_id, last_name, job_id, department_id
 ```
 
 :::
+
+## 关联查询
+
+### 笛卡尔积
+
+笛卡尔乘积是一个数学运算
+
+假设我有两个集合 X 和 Y，那么 X 和 Y 的笛卡尔积就是 X 和 Y 的所有可能组合，也就是第一个对象来自于 X，第二个对象来自于 Y 的所有可能。组合的个数即为两个集合中元素个数的乘积数
+
+![01](./img/select/01.png)
+
+SQL92 中，笛卡尔积也称为 交叉连接 ，英文是 CROSS JOIN 。
+
+在 SQL99 中也是使用 CROSS JOIN 表示交叉连接。它的作用就是可以把任意表进行连接，即使这两张表不相关。
+
+在以下情况的时候会出现笛卡尔积
+
+```sql
+-- 查询员工姓名和所在部门名称
+SELECT last_name,department_name FROM employees,departments;
+SELECT last_name,department_name FROM employees CROSS JOIN departments;
+SELECT last_name,department_name FROM employees INNER JOIN departments;
+SELECT last_name,department_name FROM employees JOIN departments;
+```
+
+解决方法就是添加连接条件
+
+```sql
+-- 案例：查询员工的姓名及其部门名称
+SELECT last_name, department_name
+FROM employees, departments
+WHERE employees.department_id = departments.department_id;
+```
+
+::: danger 提示
+在表中有相同列时，在列名之前加上表明前缀
+:::
+
+### (非)等值连接
+
+```sql
+SELECT employees.employee_id, employees.last_name,
+employees.department_id, departments.department_id,
+departments.location_id
+FROM employees, departments
+WHERE employees.department_id = departments.department_id;
+```
+
+**表的别名**
+
+::: warning 提示
+
+1. 多个表有相同列时，必须在列之前加上表名前缀
+2. 在不同表中有相同列名的列可以用表名加以区分
+3. 使用别名可以简化查询
+4. 列名钱使用表明可以提高查询效率
+5. 连接 N 个表，至少需要 n-1 个连接条件
+
+需要注意的是：如果使用了表的别名，在查询字段中、过滤条件就只能使用别名进行替换，不能使用原有的表明，否则就会报错
+
+:::
+
+```sql
+SELECT e.employee_id, e.last_name, e.department_id,
+d.department_id, d.location_id
+FROM employees e , departments d
+WHERE e.department_id = d.department_id;
+```
+
+employees 表中的列工资在 job_grades 表中最高工资与最低工资之间
+
+```sql
+SELECT e.last_name, e.salary, j.grade_level
+FROM employees e, job_grades j
+WHERE e.salary BETWEEN j.lowest_sal AND j.highest_sal;
+```
+
+### (非)自连接
+
+当 t1 与 t2 本质上是同一张表，只是利用取别名的方式虚拟成两张表以代表不同的意义
+
+然后两张表再进行内连接，外连接等查询
+
+```sql
+SELECT CONCAT(worker.last_name ,' works for ', manager.last_name)
+FROM employees worker, employees manager
+WHERE worker.manager_id = manager.employee_id ;
+
++------------------------------------------------------------+
+| CONCAT(worker.last_name ,' works for ', manager.last_name) |
++------------------------------------------------------------+
+| Kochhar works for King                                     |
+| De Haan works for King                                     |
+| Hunold works for De Haan                                   |
+| Ernst works for Hunold                                     |
+| Austin works for Hunold                                    |
+| Pataballa works for Hunold                                 |
+| Lorentz works for Hunold                                   |
+| Greenberg works for Kochhar                                |
+| Faviet works for Greenberg                                 |
+...
++------------------------------------------------------------+
+106 rows in set (0.00 sec)
+
+```
+
+### [内|外]连接
+
+内连接：结果集中不包含一个表与另一个表不匹配的行
+
+外连接：除了匹配一个表与另一个表匹配的行以外，还返回左（或右）表中不满足条件的行 ，这种连接称为左（或右） 外连接。
+
+如果是左外连接，则连接条件中左边的表成为主表，右边的表成为从表。
+
+如果是右外连接，则连接条件中右边的表成为主表，左边的表成为从表。
+
+**使用 + 创建连接**
+
+在 SQL92 中采用（+）代表从表所在的位置。即左或右外连接中，(+) 表示哪个是从表
+
+在 SQL92 中，只有左外连接和右外连接，没有满外连接
+
+```sql
+-- 左外连接
+SELECT last_name,department_name
+FROM employees ,departments
+WHERE employees.department_id = departments.department_id(+);
+
+-- 右外连接
+SELECT last_name,department_name
+FROM employees ,departments
+WHERE employees.department_id(+) = departments.department_id;
+```
+
+### SQL99 实现
+
+**基本语法**
+
+- 可以使用 ON 子句制定额外的连接条件
+- 这个连接条件是与其它条件分开的
+- ON 子句使语句具有更高的易读性
+- 关键字 JOIN、INNER JOIN、CROSS JOIN 含义是一样的，都表示内连接
+
+::: code-group
+
+```sql [语法]
+SELECT table1.column, table2.column,table3.column
+FROM table1
+JOIN table2 ON table1 和 table2 的连接条件
+JOIN table3 ON table2 和 table3 的连接条件
+```
+
+```bash [原理]
+for t1 in table1:
+    for t2 in table2:
+        if condition1:
+            for t3 in table3:
+                if condition2:
+                    output t1 + t2 + t3
+```
+
+:::
+
+**内连接**
+
+::: code-group
+
+```bash [语法]
+SELECT 字段列表
+FROM A表 INNER JOIN B表
+ON 关联条件
+WHERE 等其他子句;
+```
+
+```sql [demo 1]
+SELECT e.employee_id, e.last_name, e.department_id, d.department_id, d.location_id
+FROM employees e JOIN departments d
+ON (e.department_id = d.department_id);
+```
+
+```sql [demo 2]
+SELECT employee_id, city, department_name
+FROM employees e
+JOIN departments d
+ON d.department_id = e.department_id
+JOIN locations l
+ON d.location_id = l.location_id;
+```
+
+:::
+
+**外连接**
+
+::: danger 注意
+LEFT JOIN 和 RIGHT JOIN 只存在于 SQL99 及以后的标准中，在 SQL92 中不存在，只能用 (+) 表示
+:::
+
+- 左外连接
+
+::: code-group
+
+```bash [语法]
+SELECT 字段列表
+FROM A表 LEFT JOIN B表
+ON 关联条件
+WHERE 等其他子句;
+```
+
+```bash [示例]
+mysql> SELECT e.last_name, e.department_id, d.department_name
+    -> FROM employees e
+    -> LEFT OUTER JOIN departments d
+    -> ON (e.department_id = d.department_id) ;
++-------------+---------------+------------------+
+| last_name   | department_id | department_name  |
++-------------+---------------+------------------+
+| King        |            90 | Executive        |
+| Kochhar     |            90 | Executive        |
+| De Haan     |            90 | Executive        |
+| Hunold      |            60 | IT               |
+| Ernst       |            60 | IT               |
+| Austin      |            60 | IT               |
+| Pataballa   |            60 | IT               |
+| Lorentz     |            60 | IT               |
+| Greenberg   |           100 | Finance          |
+| Faviet      |           100 | Finance          |
+| Chen        |           100 | Finance          |
+...
+| Grant       |          NULL | NULL             |
+...
+```
+
+:::
+
+- 右外连接
+
+::: code-group
+
+```bash [语法]
+SELECT 字段列表
+FROM A表 RIGHT JOIN B表
+ON 关联条件
+WHERE 等其他子句;
+```
+
+```bash [示例]
+SELECT e.last_name, e.department_id, d.department_name
+FROM employees e
+RIGHT OUTER JOIN departments d
+ON (e.department_id = d.department_id) ;
+```
+
+:::
+
+**满外连接**
+
+满外连接的结果 = 左右表匹配的数据 + 左表没有匹配到的数据 + 右表没有匹配到的数据
+
+SQL99 是支持满外连接的。使用 FULL JOIN 或 FULL OUTER JOIN 来实现
+
+需要注意的是，MySQL 不支持 FULL JOIN，但是可以用 LEFT JOIN UNION RIGHT join 代替
