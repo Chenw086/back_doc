@@ -135,6 +135,13 @@ export default defineConfig({
 				{
 					text: '开始',
 					link: '/mysql/'
+				},
+				{
+					text: '基础',
+					items: [
+						{text: '查询', link: '/mysql/base/select'},
+						{text: '运算符', link: '/mysql/base/operator'},
+					]
 				}
 			],
 			'/nginx/': [
