@@ -688,3 +688,318 @@ ON (e.department_id = d.department_id) ;
 SQL99 是支持满外连接的。使用 FULL JOIN 或 FULL OUTER JOIN 来实现
 
 需要注意的是，MySQL 不支持 FULL JOIN，但是可以用 LEFT JOIN UNION RIGHT join 代替
+
+### 合并查询结果
+
+利用 union 关键字，可以给出多条 SELECT 语句，并将他们的结果组合成单个结果集
+
+合并时，两个表对应的数据类型必须相同，并且相互对应
+
+各个 SELECT 语句之间使用 UNION 或 UNION ALL 关键字分隔
+
+**union**
+
+返回两个查询的结果集并集，去除重复记录
+
+![02](./img/select/02.png)
+
+**union all**
+
+返回两个查询的结果集并集，不去除重复记录
+
+![03](./img/select/03.png)
+
+**示例**
+
+查询部门编号 >90 或邮件包含 a 的员工信息
+
+::: code-group
+
+```sql [res 1]
+SELECT * FROM employees WHERE email LIKE '%a%' OR department_id>90;
+```
+
+```sql [res 2]
+SELECT * FROM employees WHERE email LIKE '%a%'
+UNION
+SELECT * FROM employees WHERE department_id>90;
+```
+
+:::
+
+::: danger 提示
+执行 UNION ALL 语句时所需要的资源比 UNION 语句少。
+
+如果明确知道合并数据后的结果数据不存在重复数据，或者不需要去除重复的数据，则尽量使用 UNION ALL 语句，以提高数据查询的效率
+:::
+
+### 7 种 SQL JOIN
+
+![04](./img/select/04.png)
+
+::: code-group
+
+```sql [内]
+-- 中图：内连接 A∩B
+SELECT employee_id,last_name,department_name
+FROM employees e JOIN departments d
+ON e.`department_id` = d.`department_id`;
+```
+
+```sql [左上]
+-- 左上图：左外连接
+SELECT employee_id,last_name,department_name
+FROM employees e LEFT JOIN departments d
+ON e.`department_id` = d.`department_id`;
+```
+
+```sql [右上]
+-- 右上图：右外连接
+SELECT employee_id,last_name,department_name
+FROM employees e RIGHT JOIN departments d
+ON e.`department_id` = d.`department_id`;
+```
+
+```sql [左中]
+-- 左中图：A - A∩B
+SELECT employee_id,last_name,department_name
+FROM employees e LEFT JOIN departments d
+ON e.`department_id` = d.`department_id`
+WHERE d.`department_id` IS NULL
+```
+
+```sql [右中]
+-- 右中图：B-A∩B
+SELECT employee_id,last_name,department_name
+FROM employees e RIGHT JOIN departments d
+ON e.`department_id` = d.`department_id`
+WHERE e.`department_id` IS NULL
+```
+
+```sql [左下]
+-- 左下图：满外连接
+-- 左中图 + 右上图 A∪B
+SELECT employee_id,last_name,department_name
+FROM employees e LEFT JOIN departments d
+ON e.`department_id` = d.`department_id`
+WHERE d.`department_id` IS NULL
+UNION ALL #没有去重操作，效率高
+SELECT employee_id,last_name,department_name
+FROM employees e RIGHT JOIN departments d
+ON e.`department_id` = d.`department_id`;
+```
+
+```sql [右下]
+-- 左中图 + 右中图 A ∪B- A∩B 或者 (A - A∩B) ∪ （B - A∩B）
+SELECT employee_id,last_name,department_name
+FROM employees e LEFT JOIN departments d
+ON e.`department_id` = d.`department_id`
+WHERE d.`department_id` IS NULL
+UNION ALL
+SELECT employee_id,last_name,department_name
+FROM employees e RIGHT JOIN departments d
+ON e.`department_id` = d.`department_id`
+WHERE e.`department_id` IS NULL
+```
+
+:::
+
+### 自然连接
+
+::: warning 提示
+此内容为 SQL 99 新增内容
+:::
+
+NATURAL JOIN 表示自然连接，可以理解为 SQL92 中的等值连接
+
+会自动查询两张连接表中所有相同的字段，然后进行等值连接
+
+::: code-group
+
+```sql [SQL92]
+SELECT employee_id,last_name,department_name
+FROM employees e JOIN departments d
+ON e.`department_id` = d.`department_id`
+AND e.`manager_id` = d.`manager_id`;
+```
+
+```sql [SQL99]
+SELECT employee_id,last_name,department_name
+FROM employees e NATURAL JOIN departments d;
+```
+
+:::
+
+### USING
+
+::: warning 提示
+此内容为 SQL 99 新增内容
+:::
+
+进行连接的时候 SQL99 支持使用 USING 指定数据表里同名字段进行等值连接
+
+但是只能配合 JOIN 一起使用
+
+::: code-group
+
+```sql [SQL99]
+SELECT employee_id,last_name,department_name
+FROM employees e JOIN departments d
+USING (department_id);
+```
+
+```sql [SQL92]
+SELECT employee_id,last_name,department_name
+FROM employees e ,departments d
+WHERE e.department_id = d.department_id;
+```
+
+:::
+
+### WHERE、ON、USING 对比
+
+where：适用于所有关联查询
+
+on：只能和 join 一起使用，只能写关联条件。虽然关联条件可以并到 where 中和其他条件一起写，但分开可读性更好
+
+using：只能与 join 一起使用，而且要求两个关联字段在关联表中名称一致，而且只能表示关联字段相等
+
+::: danger 建议
+超过三个表禁止 JOIN
+
+需要 JOIN 的字段，数据类型保持绝对一致
+
+多表关联查询时，保证关联的字段需要索引
+:::
+
+### 练习
+
+显示所有员工的姓名，部门号和部门名称
+
+```sql
+SELECT last_name, e.department_id, department_name
+FROM employees e
+LEFT OUTER JOIN departments d
+ON e.`department_id` = d.`department_id`;
+```
+
+查询 90 号部门员工的 job_id 和 90 号部门的 location_id
+
+::: code-group
+
+```sql [方式 1]
+SELECT job_id, location_id
+FROM employees e, departments d
+WHERE e.`department_id` = d.`department_id`
+AND e.`department_id` = 90;
+```
+
+```sql [方式 2]
+SELECT job_id, location_id
+FROM employees e
+JOIN departments d
+ON e.`department_id` = d.`department_id`
+WHERE e.`department_id` = 90;
+```
+
+:::
+
+选择所有有奖金的员工的 last_name , department_name , location_id ,city
+
+```sql
+SELECT last_name , department_name , d.location_id , city
+FROM employees e
+LEFT OUTER JOIN departments d
+ON e.`department_id` = d.`department_id`
+LEFT OUTER JOIN locations l
+ON d.`location_id` = l.`location_id`
+WHERE commission_pct IS NOT NULL;
+```
+
+选择 city 在 Toronto 工作的员工的 last_name , job_id , department_id ,department_name
+
+::: code-group
+
+```sql [方式 1]
+SELECT last_name , job_id , e.department_id , department_name
+FROM employees e, departments d, locations l
+WHERE e.`department_id` = d.`department_id`
+AND d.`location_id` = l.`location_id`
+AND city = 'Toronto';
+```
+
+```sql [方式 2]
+SELECT last_name , job_id , e.department_id , department_name
+FROM employees e
+JOIN departments d
+ON e.`department_id` = d.`department_id`
+JOIN locations l
+ON l.`location_id` = d.`location_id`
+WHERE l.`city` = 'Toronto';
+```
+
+:::
+
+查询员工所在的部门名称、部门地址、姓名、工作、工资，其中员工所在部门的部门名称为’Executive’
+
+```sql
+SELECT department_name, street_address, last_name, job_id, salary
+FROM employees e JOIN departments d
+ON e.department_id = d.department_id
+JOIN locations l
+ON d.`location_id` = l.`location_id`
+WHERE department_name = 'Executive'
+```
+
+选择指定员工的姓名，员工号，以及他的管理者的姓名和员工号
+
+```sql
+SELECT emp.last_name employees, emp.employee_id "Emp#", mgr.last_name manager,
+mgr.employee_id "Mgr#"
+FROM employees emp
+LEFT OUTER JOIN employees mgr
+ON emp.manager_id = mgr.employee_id;
+```
+
+查询哪些部门没有员工
+
+::: code-group
+
+```sql [方式 1]
+-- 关联查询
+SELECT d.department_id
+FROM departments d LEFT JOIN employees e
+ON e.department_id = d.`department_id`
+WHERE e.department_id IS NULL
+```
+
+```sql [方式 2]
+-- 子查询
+SELECT department_id
+FROM departments d
+WHERE NOT EXISTS (
+    SELECT *
+    FROM employees e
+    WHERE e.`department_id` = d.`department_id`
+)
+```
+
+:::
+
+查询哪个城市没有部门
+
+```sql
+SELECT l.location_id,l.city
+FROM locations l LEFT JOIN departments d
+ON l.`location_id` = d.`location_id`
+WHERE d.`location_id` IS NULL
+```
+
+查询部门名为 Sales 或 IT 的员工信息
+
+```sql
+SELECT employee_id,last_name,department_name
+FROM employees e,departments d
+WHERE e.department_id = d.`department_id`
+AND d.`department_name` IN ('Sales','IT');
+```
