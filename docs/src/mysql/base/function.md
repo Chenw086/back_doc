@@ -1090,3 +1090,138 @@ mysql> SELECT department_id, MAX(salary)
    > WHERE 比 HAVING 更高效，WHERE 先筛选，用一个筛选后较小的数据集和关联表进行连接，这样占用资源较少
 
 :::
+
+### 练习
+
+查询公司员工工资的最大值，最小值，平均值，总和
+
+```sql
+SELECT MAX(salary), MIN(salary), AVG(salary), SUM(salary)
+FROM employees;
+```
+
+查询各 job_id 的员工工资的最大值，最小值，平均值，总和
+
+```sql
+SELECT job_id, MAX(salary), MIN(salary), AVG(salary), SUM(salary)
+FROM employees
+GROUP BY job_id;
+```
+
+选择具有各个 job_id 的员工人数
+
+```sql
+SELECT job_id, COUNT(*)
+FROM employees
+GROUP BY job_id;
+```
+
+查询员工最高工资和最低工资的差距（DIFFERENCE）
+
+```sql
+SELECT MAX(salary), MIN(salary), MAX(salary) - MIN(salary) DIFFERENCE
+FROM employees;
+```
+
+查询各个管理者手下员工的最低工资，其中最低工资不能低于 6000，没有管理者的员工不计算在内
+
+```sql
+SELECT manager_id, MIN(salary)
+FROM employees
+WHERE manager_id IS NOT NULL
+GROUP BY manager_id
+HAVING MIN(salary) > 6000;
+```
+
+查询所有部门的名字，location_id，员工数量和平均工资，并按平均工资降序
+
+```bash
+mysql> SELECT department_name, location_id, COUNT(employee_id), COUNT(d.`department_id`),AVG(salary) avg_sal
+    -> FROM employees e RIGHT JOIN departments d
+    -> ON e.`department_id` = d.`department_id`
+    -> GROUP BY department_name, location_id
+    -> ORDER BY avg_sal DESC;
++----------------------+-------------+--------------------+--------------------------+--------------+
+| department_name      | location_id | COUNT(employee_id) | COUNT(d.`department_id`) | avg_sal      |
++----------------------+-------------+--------------------+--------------------------+--------------+
+| Executive            |        1700 |                  3 |                        3 | 19333.333333 |
+| Accounting           |        1700 |                  2 |                        2 | 10150.000000 |
+| Public Relations     |        2700 |                  1 |                        1 | 10000.000000 |
+| Marketing            |        1800 |                  2 |                        2 |  9500.000000 |
+| Sales                |        2500 |                 34 |                       34 |  8955.882353 |
+| Finance              |        1700 |                  6 |                        6 |  8600.000000 |
+| Human Resources      |        2400 |                  1 |                        1 |  6500.000000 |
+| IT                   |        1400 |                  5 |                        5 |  5760.000000 |
+| Administration       |        1700 |                  1 |                        1 |  4400.000000 |
+| Purchasing           |        1700 |                  6 |                        6 |  4150.000000 |
+| Shipping             |        1500 |                 45 |                       45 |  3475.555556 |
+| Treasury             |        1700 |                  0 |                        1 |         NULL |
+| Corporate Tax        |        1700 |                  0 |                        1 |         NULL |
+| Control And Credit   |        1700 |                  0 |                        1 |         NULL |
+| Shareholder Services |        1700 |                  0 |                        1 |         NULL |
+| Benefits             |        1700 |                  0 |                        1 |         NULL |
+| Manufacturing        |        1700 |                  0 |                        1 |         NULL |
+| Construction         |        1700 |                  0 |                        1 |         NULL |
+| Contracting          |        1700 |                  0 |                        1 |         NULL |
+| Operations           |        1700 |                  0 |                        1 |         NULL |
+| IT Support           |        1700 |                  0 |                        1 |         NULL |
+| NOC                  |        1700 |                  0 |                        1 |         NULL |
+| IT Helpdesk          |        1700 |                  0 |                        1 |         NULL |
+| Government Sales     |        1700 |                  0 |                        1 |         NULL |
+| Retail Sales         |        1700 |                  0 |                        1 |         NULL |
+| Recruiting           |        1700 |                  0 |                        1 |         NULL |
+| Payroll              |        1700 |                  0 |                        1 |         NULL |
++----------------------+-------------+--------------------+--------------------------+--------------+
+27 rows in set (0.03 sec)
+
+```
+
+查询每部门中工种名和其最低工资
+
+```bash
+mysql> SELECT department_name,job_id,MIN(salary)
+    -> FROM departments d LEFT JOIN employees e
+    -> ON e.`department_id` = d.`department_id`
+    -> GROUP BY department_name,job_id;
++----------------------+------------+-------------+
+| department_name      | job_id     | MIN(salary) |
++----------------------+------------+-------------+
+| Administration       | AD_ASST    |     4400.00 |
+| Marketing            | MK_MAN     |    13000.00 |
+| Marketing            | MK_REP     |     6000.00 |
+| Purchasing           | PU_MAN     |    11000.00 |
+| Purchasing           | PU_CLERK   |     2500.00 |
+| Human Resources      | HR_REP     |     6500.00 |
+| Shipping             | ST_MAN     |     5800.00 |
+| Shipping             | ST_CLERK   |     2100.00 |
+| Shipping             | SH_CLERK   |     2500.00 |
+| IT                   | IT_PROG    |     4200.00 |
+| Public Relations     | PR_REP     |    10000.00 |
+| Sales                | SA_MAN     |    10500.00 |
+| Sales                | SA_REP     |     6100.00 |
+| Executive            | AD_PRES    |    24000.00 |
+| Executive            | AD_VP      |    17000.00 |
+| Finance              | FI_MGR     |    12000.00 |
+| Finance              | FI_ACCOUNT |     6900.00 |
+| Accounting           | AC_MGR     |    12000.00 |
+| Accounting           | AC_ACCOUNT |     8300.00 |
+| Treasury             | NULL       |        NULL |
+| Corporate Tax        | NULL       |        NULL |
+| Control And Credit   | NULL       |        NULL |
+| Shareholder Services | NULL       |        NULL |
+| Benefits             | NULL       |        NULL |
+| Manufacturing        | NULL       |        NULL |
+| Construction         | NULL       |        NULL |
+| Contracting          | NULL       |        NULL |
+| Operations           | NULL       |        NULL |
+| IT Support           | NULL       |        NULL |
+| NOC                  | NULL       |        NULL |
+| IT Helpdesk          | NULL       |        NULL |
+| Government Sales     | NULL       |        NULL |
+| Retail Sales         | NULL       |        NULL |
+| Recruiting           | NULL       |        NULL |
+| Payroll              | NULL       |        NULL |
++----------------------+------------+-------------+
+35 rows in set (0.00 sec)
+
+```

@@ -63,81 +63,6 @@ LIMIT 2 -- 顺序 7
 5. 在提取到了想要的字段数据之后，就可以按照制定的字段进行排序，也就是 ORDER BY 阶段，得到虚拟表 vt_6
 6. 在 vt_6 的基础上，取出指定行的记录，也就是 LIMIT 阶段，得到最终的结果，对应的虚拟表是 vt_7
 
-## 规则与规范
-
-**基本规范**
-
-1. SQL 可以写在一行或者多行，为了提高可读性，各子句分行写，必要时使用缩进
-2. 每条命令以 ; 或 \g 或 \G 结束
-3. 关键字不能被缩写也不能分行
-4. 关于标点符号
-   - ()、''、""、是成对结束
-   - 必须在英文状态的半角输入方式
-   - 字符串型和日期时间类型可以使用单引号 '' 表示
-   - 列的别名，尽量使用双引号 ""，而且不建议省略 as
-
-**大小写规范**
-
-`mysql` 在 `win` 环境下大小写不敏感
-
-`mysql` 在 `linux` 环境下大小写敏感：
-
-- 数据库名、表名、表的别名、变量名严格区分大小写
-
-- 关键字、函数名、列名、列的别名（字段的别名）忽略大小写
-
-推荐采用统一的书写规范：
-
-- 数据库名、表名、表别名、字段名、字段别名都小写
-- sql 关键字、函数名、标定变量等都大写
-
-**注释**
-
-```bash
-单行注释：#注释文字(MySQL特有的方式)
-单行注释：-- 注释文字(--后面必须包含一个空格。)
-多行注释：/* 注释文字 */
-```
-
-**命名规则**
-
-1. 数据库、表名不得超过 30 个字符，变量名限制为 29 个
-2. 必须只能包含 A-Z,a-z,0-9,\_ 共 63 个字符
-3. 数据库名、表名、字段名等对象中间不要包含括号
-4. 同一个 mysql 软件中，数据库不能同名；同库中表不能重名；同表中，同字段不能同名
-5. 必须保证字段没有和保留字、数据库系统或常用方法冲突。坚持使用则使用 `` 引起来
-6. 保持字段名和类型的一致性，在命名字段并为其指定数据的时候一定要保持一致性
-   > 假如数据类型在一个表里是整数，在另一个表中就变成字符串了
-
-**数据导入指令**
-
-在命令行客户端登录 mysql，使用 source 指令导入
-
-```shell
-mysql> source d:\mysqldb.sql
-
-mysql> use egg;
-Database changed
-
-mysql> desc employees;
-+----------------+-------------+------+-----+---------+-------+
-| Field          | Type        | Null | Key | Default | Extra |
-+----------------+-------------+------+-----+---------+-------+
-| employee_id    | int         | NO   | PRI | 0       |       |
-| first_name     | varchar(20) | YES  |     | NULL    |       |
-| last_name      | varchar(25) | NO   |     | NULL    |       |
-| email          | varchar(25) | NO   | UNI | NULL    |       |
-| phone_number   | varchar(20) | YES  |     | NULL    |       |
-| hire_date      | date        | NO   |     | NULL    |       |
-| job_id         | varchar(10) | NO   | MUL | NULL    |       |
-| salary         | double(8,2) | YES  |     | NULL    |       |
-| commission_pct | double(2,2) | YES  |     | NULL    |       |
-| manager_id     | int         | YES  | MUL | NULL    |       |
-| department_id  | int         | YES  | MUL | NULL    |       |
-+----------------+-------------+------+-----+---------+-------+
-11 rows in set (0.01 sec)
-```
-
 ## 基本语法
 
 ::: danger
@@ -1045,4 +970,400 @@ SELECT employee_id,last_name,department_name
 FROM employees e,departments d
 WHERE e.department_id = d.`department_id`
 AND d.`department_name` IN ('Sales','IT');
+```
+
+## 子查询
+
+::: danger 注意
+
+- 子查询要包含在括号内
+
+- 将子查询放在比较条件的右侧
+
+- 单行操作符对应单行子查询，多行操作符对应多行子查询
+
+- 自连接速度高于子查询：
+
+  > 子查询实际上是通过未知表进行查询后的条件判断，而自连接是通过已知的自身数据表进行条件判断，因此在大部分 DBMS 中都对自连接处理进行了优化
+
+:::
+
+子查询指的是查询语句嵌套在另一个查询语句内部的查询
+
+很多时候查询需要从结果集中获取数据，或者需要从同一个表中先计算得出一个数据结果，然后与这个数据结果（可能是某个标量，也可能是某个集合）进行比较
+
+示例：谁的工资比 Abel 高？
+
+::: code-group
+
+```sql [普通]
+SELECT salary
+FROM employees
+WHERE last_name = 'Abel';
+
+SELECT last_name,salary
+FROM employees
+WHERE salary > 11000;
+```
+
+```sql [自连接]
+SELECT e2.last_name,e2.salary
+FROM employees e1,employees e2
+WHERE e1.last_name = 'Abel'
+AND e1.`salary` < e2.`salary
+```
+
+```sql [子查询]
+SELECT last_name,salary
+FROM employees
+WHERE salary > (
+    SELECT salary
+    FROM employees
+    WHERE last_name = 'Abel'
+);
+```
+
+:::
+
+**子查询基本使用**
+
+- 子查询在主查询之前一次执行完成
+- 子查询的结果被主查询使用
+
+**子查询的分类**
+
+方式 1:
+
+分为单行子查询、多行子查询
+
+![分类](./img/select/select__2024-06-05-16-58-26.png)
+
+方式 2：
+
+按照子查询是否执行多次，分为 `相关子查询` 或 `不相关子查询`
+
+子查询从数据表中查询了数据结果，如果这个数据结果只执行一次，然后这个数据结果作为主查询的条件进行执行，那么这样的子查询叫做不相关子查询。
+
+同样，如果子查询需要执行多次，即采用循环的方式，先从外部查询开始，每次都传入子查询进行查询，然后再将结果反馈给外部，这种嵌套的执行方式就称为相关子查询。
+
+### 单行子查询
+
+单行比较操作符：=、>、>=、<、<=、<>
+
+**示例：**
+
+返回 job_id 与 141 号员工相同，salary 比 143 号员工多的员工姓名，job_id 和工资
+
+```sql
+SELECT last_name, job_id, salary
+FROM employees
+WHERE job_id =
+    (SELECT job_id
+    FROM employees
+    WHERE employee_id = 141)
+AND salary >
+    (SELECT salary
+    FROM employees
+    WHERE employee_id = 143);
+```
+
+返回公司工资最少的员工的 last_name,job_id 和 salary
+
+```sql
+SELECT last_name, job_id, salary
+FROM employees
+WHERE salary =
+    (SELECT MIN(salary)
+    FROM employees);
+```
+
+查询与 141 号或 174 号员工的 manager_id 和 department_id 相同的其他员工的 employee_id，manager_id，department_id
+
+::: code-group
+
+```sql [不成对比较]
+SELECT employee_id, manager_id, department_id
+FROM employees
+WHERE manager_id IN
+    (SELECT manager_id
+    FROM employees
+    WHERE employee_id IN (174,141))
+AND department_id IN
+    (SELECT department_id
+    FROM employees
+    WHERE employee_id IN (174,141))
+    AND employee_id NOT IN(174,141);
+```
+
+```sql [成对比较]
+SELECT employee_id, manager_id, department_id
+FROM employees
+WHERE (manager_id, department_id) IN
+    (SELECT manager_id, department_id
+    FROM employees
+    WHERE employee_id IN (141,174))
+    AND employee_id NOT IN (141,174);
+```
+
+:::
+
+**写在 HAVING 或 CASE 中**
+
+::: code-group
+
+```sql [HAVING]
+-- 查询最低工资大于50号部门最低工资的部门id和其最低工资
+--  首先执行子查询，然后向主查询的 HAVING 子句返回结果
+SELECT department_id, MIN(salary)
+FROM employees
+GROUP BY department_id
+HAVING MIN(salary) >
+    (SELECT MIN(salary)
+    FROM employees
+    WHERE department_id = 50);
+```
+
+```sql [CASE]
+-- 显式员工的employee_id,last_name和location。其中，若员工department_id与location_id为1800的department_id相同，则location为’Canada’，其余则为’USA’。
+SELECT employee_id, last_name,
+(CASE department_id
+WHEN
+    (SELECT department_id FROM departments
+    WHERE location_id = 1800)
+    THEN 'Canada' ELSE 'USA' END) location
+    FROM employees;
+```
+
+:::
+
+**子查询空值问题**
+
+子查询不返回任何行
+
+```bash
+mysql> SELECT last_name, job_id
+    -> FROM employees
+    -> WHERE job_id =
+    -> (SELECT job_id
+    -> FROM employees
+    -> WHERE last_name = 'Haas');
+Empty set (0.00 sec)
+
+```
+
+**非法使用子查询**
+
+会报错
+
+```bash
+# 多行子查询使用单行比较符
+
+mysql> SELECT employee_id, last_name
+    -> FROM employees
+    -> WHERE salary =
+    ->     (SELECT MIN(salary)
+    ->     FROM employees
+    ->     GROUP BY department_id);
+ERROR 1242 (21000): Subquery returns more than 1 row
+
+```
+
+### 多行子查询
+
+内查询返回多行，使用多行比较操作符
+
+多行操作符： IN、ANY、ALL、SOME
+
+**代码示例：**
+
+查询平均工资最低的部门 id
+
+::: code-group
+
+```sql [res 1]
+SELECT department_id
+FROM employees
+GROUP BY department_id
+HAVING AVG(salary) = (
+    SELECT MIN(avg_sal)
+        FROM (
+        SELECT AVG(salary) avg_sal
+        FROM employees
+        GROUP BY department_id
+        ) dept_avg_sal
+    )
+```
+
+```sql [res 2]
+SELECT department_id
+FROM employees
+GROUP BY department_id
+HAVING AVG(salary) <= ALL (
+        SELECT AVG(salary) avg_sal
+        FROM employees
+        GROUP BY department_id
+    )
+```
+
+:::
+
+### 相关子查询
+
+子查询的执行依赖外部查询，通常情况下都是因为子查询中的表用到了外部的表，并进行条件关联
+
+因此每执行一次外部查询，子查询都要重新计算一次，这样的子查询就称之为关联子查询
+
+子查询使用主查询中的列
+
+![相关子查询](./img/select/select__2024-06-05-19-01-57.png)
+
+**示例：**
+
+查询员工中工资大于本部门平均工资的员工的 last_name,salary 和其 department_id
+
+::: code-group
+
+```sql [相关子查询]
+SELECT last_name, salary, department_id
+FROM employees `outer`
+WHERE salary > (
+ SELECT AVG(salary)
+ FROM employees
+ WHERE department_id = `outer`.department_id
+);
+```
+
+```sql [FROM 中使用子查询]
+SELECT last_name, salary, e1.department_id FROM employees e1,( SELECT department_id, AVG( salary ) dept_avg_sal FROM employees GROUP BY department_id ) e2
+WHERE
+ e1.`department_id` = e2.department_id
+ AND e2.dept_avg_sal < e1.`salary`;
+```
+
+:::
+
+::: info
+FROM 型的子查询：子查询作为 FROM 的一部分，子查询要用（）引起来，并且要给这个子查询取别名，把它当成一张“临时虚拟表”来用
+:::
+
+在 ORDER BY 中使用子查询
+
+查询员工的 id,salary,按照 department_name 排序
+
+```sql
+SELECT employee_id,salary
+FROM employees e
+ORDER BY (
+    SELECT department_name
+    FROM departments d
+    WHERE e.`department_id` = d.`department_id`
+);
+```
+
+若 employees 表中 employee_id 与 job_history 表中 employee_id 相同的数目不小于 2，输出这些相同 id 的员工的 employee_id,last_name 和其 job_id
+
+```sql
+SELECT e.employee_id, last_name,e.job_id
+FROM employees e
+WHERE 2 <= (SELECT COUNT(*)
+    FROM job_history
+    WHERE employee_id = e.employee_id);
+```
+
+**EXISTS 与 NOT EXISTS**
+
+关联子查询通常也会和 EXISTS 操作符一起使用，用来检查在子查询中是否存在满足条件的行
+
+如果子查询中不存在满足条件的行：
+
+- 条件返回 FALSE
+- 继续在子查询中查找
+
+如果在子查询中存在满足条件的行
+
+- 不在子查询中继续查找
+- 条件返回 TRUE
+
+NOT EXISTS 关键字表示如果不存在某种条件，则返回 TRUE，否则 FALSE
+
+查询公司管理者的 employee_id，last_name，job_id，department_id 信息
+
+::: code-group
+
+```sql [子查询]
+SELECT employee_id, last_name, job_id, department_id
+FROM employees e1
+WHERE EXISTS ( SELECT *
+    FROM employees e2
+    WHERE e2.manager_id =
+        e1.employee_id);
+```
+
+```sql [自连接]
+SELECT DISTINCT e1.employee_id, e1.last_name, e1.job_id, e1.department_id
+FROM employees e1 JOIN employees e2
+WHERE e1.employee_id = e2.manager_id;
+```
+
+```sql [IN]
+SELECT employee_id,last_name,job_id,department_id
+FROM employees
+WHERE employee_id IN (
+    SELECT DISTINCT manager_id
+    FROM employees
+);
+```
+
+:::
+
+查询 departments 表中，不存在于 employees 表中的部门的 department_id 和 department_name
+
+```sql
+SELECT department_id, department_name
+FROM departments d
+WHERE NOT EXISTS (SELECT 'X'
+    FROM employees
+    WHERE department_id = d.department_id);
+```
+
+**相关更新**
+
+```sql
+UPDATE table1 alias1
+SET column = (SELECT expression
+    FROM table2 alias2
+    WHERE alias1.column = alias2.column);
+```
+
+在 employees 中增加一个 department_name 字段，数据为员工对应的部门名称
+
+```sql
+-- 1）
+ALTER TABLE employees
+ADD(department_name VARCHAR2(14));
+
+-- 2）
+UPDATE employees e
+SET department_name = (SELECT department_name
+    FROM departments d
+    WHERE e.department_id = d.department_id);
+```
+
+**相关删除**
+
+```sql
+DELETE FROM table1 alias1
+WHERE column operator (SELECT expression
+    FROM table2 alias2
+    WHERE alias1.column = alias2.column);
+```
+
+删除表 employees 中，其与 emp_history 表皆有的数据
+
+```sql
+DELETE FROM employees e
+WHERE employee_id in
+(SELECT employee_id
+    FROM emp_history
+    WHERE employee_id = e.employee_id);
 ```
