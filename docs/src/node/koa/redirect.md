@@ -8,7 +8,7 @@ title: koa - 重定向
 访问请求 A 的时候会重定向到 B 请求
 :::
 
-以下代码，当在浏览器地址栏输入： http://localhost:3000/redirect
+以下代码，当在浏览器地址栏输入： `http://localhost:3000/redirect`
 
 会返回 302，并且 location 到 /foo
 

@@ -11,3 +11,4 @@ node_modules/
 *.un~
 **/typings/
 **/.nyc_output/
+dist

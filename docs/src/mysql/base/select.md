@@ -20,6 +20,49 @@ DCL（Data Control Language）：用于定义数据库、表、字段、用户�
 
 :::
 
+## SELECT 执行过程
+
+::: code-group
+
+```sql [书写顺序]
+SELECT ... FROM ... WHERE ... GROUP BY ... HAVING ... ORDER BY ... LIMIT...
+```
+
+```sql [执行顺序]
+FROM -> WHERE -> GROUP BY -> HAVING -> SELECT 的字段 -> DISTINCT -> ORDER BY -> LIMIT
+```
+
+```sql [示例]
+SELECT DISTINCT player_id, player_name, count(*) as num -- 顺序 5
+FROM player JOIN team ON player.team_id = team.team_id -- 顺序 1
+WHERE height > 1.80 -- 顺序 2
+GROUP BY player.team_id -- 顺序 3
+HAVING num > 2 -- 顺序 4
+ORDER BY num DESC -- 顺序 6
+LIMIT 2 -- 顺序 7
+```
+
+:::
+
+**执行原理**
+
+1. SELECT 是先执行 FROM 这一步的。在这个阶段，如果是多张表联查，还会经历以下步骤：
+
+- 首先通过 CROSS JOIN 求笛卡尔积，相当于虚拟表 vt_1-1
+- 通过 ON 进行筛选，在虚拟表 vt_1-1 的基础上进行筛选，得到虚拟表 vt_1-2
+- 添加外部行。如果使用的是左连接、右连接或者全连接，会涉及到外部行，也就是在虚拟表 vt_1-2 的基础上增加外部行，得到虚拟表 vt_1-3
+
+  > 如果是 2 张以上的表，还会重复上面的步骤，直到所有表都被处理完为止。这个过程得到原始数据
+
+2. 当拿到查询数据表的原始数据，也就是最终虚拟表 vt_1，可以在此基础上进行`WHERE 阶段`，在此阶段，会根据 vt_1 表的结果进行筛选过滤，得到虚拟表 vt_2
+3. 进入 `GROUP` 与 `HAVING` 阶段，在这个阶段在虚拟表 vt_2 的基础上进行分组和分组过滤，得到中间虚拟表 vt_3 和 vt_4
+
+- 当完成了条件筛选部分之后，就可以筛选表中提取的字段，也就是进入 `SELECT` 和 `DISTINCT` 阶段
+
+4. 在 `SELECT` 阶段会提取想要的字段，然后在 `DISTINCT` 阶段过滤掉重复的行，分别得到中间的虚拟表 vt_5-1 和 vt_5-2
+5. 在提取到了想要的字段数据之后，就可以按照制定的字段进行排序，也就是 ORDER BY 阶段，得到虚拟表 vt_6
+6. 在 vt_6 的基础上，取出指定行的记录，也就是 LIMIT 阶段，得到最终的结果，对应的虚拟表是 vt_7
+
 ## 规则与规范
 
 **基本规范**

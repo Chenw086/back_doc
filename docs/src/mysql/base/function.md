@@ -763,3 +763,330 @@ mysql> SELECT CONNECTION_ID();
 | 函数              | 用法                                                                     |
 | :---------------- | ------------------------------------------------------------------------ |
 | BENCHMARK(n,expr) | 将表达式 expr 重复执行 n 次。用于测试 MySQL 处理 expr 表达式所耗费的时间 |
+
+```bash
+mysql> SELECT BENCHMARK(10000000000, MD5('mysql'));
++--------------------------------------+
+| BENCHMARK(10000000000, MD5('mysql')) |
++--------------------------------------+
+|                                    0 |
++--------------------------------------+
+1 row in set (27 min 30.66 sec)
+
+```
+
+### 练习
+
+显示系统时间(注：日期+时间)
+
+```sql
+SELECT NOW()
+FROM DUAL;
+```
+
+查询员工号，姓名，工资，以及工资提高百分之 20%后的结果（new salary）
+
+```sql
+SELECT employee_id, last_name, salary, salary * 1.2 "new salary"
+FROM employees;
+```
+
+将员工的姓名按首字母排序，并写出姓名的长度（length）
+
+```sql
+SELECT last_name, LENGTH(last_name)
+FROM employees
+ORDER BY last_name DESC;
+```
+
+查询员工 id,last_name,salary，并作为一个列输出，别名为 OUT_PUT
+
+```sql
+SELECT CONCAT(employee_id, ',' , last_name , ',', salary) OUT_PUT
+FROM employees;
+```
+
+查询公司各员工工作的年数、工作的天数，并按工作年数的降序排序
+
+```sql
+SELECT DATEDIFF(SYSDATE(), hire_date) / 365 worked_years, DATEDIFF(SYSDATE(),
+hire_date) worked_days
+FROM employees
+ORDER BY worked_years DESC
+```
+
+查询员工姓名，hire_date , department_id，满足以下条件：雇用时间在 1997 年之后，department_id 为 80 或 90 或 110, commission_pct 不为空
+
+```sql
+SELECT last_name, hire_date, department_id
+FROM employees
+-- WHERE hire_date >= '1997-01-01'
+-- WHERE hire_date >= STR_TO_DATE('1997-01-01', '%Y-%m-%d')
+WHERE DATE_FORMAT(hire_date,'%Y') >= '1997'
+AND department_id IN (80, 90, 110)
+AND commission_pct IS NOT NULL
+```
+
+查询公司中入职超过 10000 天的员工姓名、入职时间
+
+```sql
+SELECT last_name,hire_date
+FROM employees
+-- WHERE TO_DAYS(NOW()) - to_days(hire_date) > 10000;
+WHERE DATEDIFF(NOW(),hire_date) > 10000;
+```
+
+做一个查询，产生下面的结果
+
+::: code-group
+
+```bash
+<last_name> earns `<salary>` monthly but wants <salary*3>
+Dream Salary
+King earns 24000 monthly but wants 72000
+```
+
+```sql
+SELECT CONCAT(last_name, ' earns ', TRUNCATE(salary, 0) , ' monthly but wants ',
+TRUNCATE(salary * 3, 0)) "Dream Salary"
+FROM employees;
+```
+
+:::
+
+使用 CASE-WHEN，按照下面的条件：
+
+::: code-group
+
+```bash [示例]
+-- job grade
+-- AD_PRES A
+-- ST_MAN B
+-- IT_PROG C
+-- SA_REP D
+-- ST_CLERK E
+-- 产生下面的结果
+-- Last_name Job_id Grade
+-- king AD_PRES A
+```
+
+```sql [答案]
+SELECT last_name Last_name, job_id Job_id, CASE job_id WHEN 'AD_PRES' THEN 'A'
+WHEN 'ST_MAN' THEN 'B'
+WHEN 'IT_PROG' THEN 'C'
+WHEN 'SA_REP' THEN 'D'
+WHEN 'ST_CLERK' THEN 'E'
+ELSE 'F'
+END "grade"
+FROM employees;
+```
+
+:::
+
+## 聚合函数
+
+::: danger
+
+1. 聚合函数不能嵌套调用，不如不能出现类似：AVG(SUM(字段名称))形式的调用
+
+:::
+
+聚合函数作用与一组数据，并对一组数据返回一个值
+
+![info](./img/function/function__2024-06-05-11-30-50.png)
+
+聚合函数类型
+
+- AVG()
+- SUM()
+- MAX()
+- MIN()
+- COUNT()
+
+### 函数介绍
+
+**AVG 和 SUM**
+
+可以对数值型数据使用 AVG 和 SUM 函数
+
+```bash
+mysql> SELECT AVG(salary), MAX(salary),MIN(salary), SUM(salary)
+    -> FROM employees
+    -> WHERE job_id LIKE '%REP%';
++-------------+-------------+-------------+-------------+
+| AVG(salary) | MAX(salary) | MIN(salary) | SUM(salary) |
++-------------+-------------+-------------+-------------+
+| 8272.727273 |    11500.00 |     6000.00 |   273000.00 |
++-------------+-------------+-------------+-------------+
+1 row in set (0.00 sec)
+
+```
+
+**MIN、MAX**
+
+```bash
+mysql> SELECT MIN(hire_date), MAX(hire_date)
+    -> FROM employees;
++----------------+----------------+
+| MIN(hire_date) | MAX(hire_date) |
++----------------+----------------+
+| 1987-06-17     | 2000-04-21     |
++----------------+----------------+
+1 row in set (0.00 sec)
+```
+
+**COUNT**
+
+COUNT(\*)返回表中记录总数，适用于任意数据类型
+
+COUNT(expr) 返回 expr 不为空的记录总数
+
+::: code-group
+
+```sql [count *]
+mysql> SELECT COUNT(*)
+    -> FROM employees
+    -> WHERE department_id = 50;
++----------+
+| COUNT(*) |
++----------+
+|       45 |
++----------+
+1 row in set (0.01 sec)
+
+```
+
+```bash [count expr]
+mysql> SELECT COUNT(commission_pct)
+    -> FROM employees
+    -> WHERE department_id = 50;
++-----------------------+
+| COUNT(commission_pct) |
++-----------------------+
+|                     0 |
++-----------------------+
+1 row in set (0.00 sec)
+
+```
+
+:::
+
+::: warning 比较
+**用 count(\_)，count(1)，count(列名)谁好呢 ?**
+
+其实，对于 MyISAM 引擎的表是没有区别的。这种引擎内部有一计数器在维护着行数。Innodb 引擎的表用 count(\_),count(1)直接读行数，复杂度是 O(n)，因为 innodb 真的要去数一遍。但好于具体的 count(列名)。
+
+**能不能使用 count(列名)替换 count(\*) ?**
+
+不要使用 count(列名)来替代 count(\*) ， count(\*) 是 SQL92 定义的标准统计行数的语法，跟数据库无关，跟 NULL 和非 NULL 无关。
+
+说明：count(\*)会统计值为 NULL 的行，而 count(列名)不会统计此列为 NULL 值的行。
+
+:::
+
+### GROUP BY
+
+::: danger 提示
+在 SELECT 列表中所有未包含在组函数中的列都应该包含在 GROUP BY 子句中
+
+包含在 GROUP BY 子句中的列不必包含在 SELECT 列表中
+:::
+
+![图例](./img/function/function__2024-06-05-14-23-21.png)
+
+::: code-group
+
+```sql [语法]
+SELECT column, group_function(column)
+FROM table
+[WHERE condition]
+[GROUP BY group_by_expression]
+[ORDER BY column];
+```
+
+```sql [示例]
+SELECT department_id, AVG(salary)
+FROM employees
+GROUP BY department_id ;
+```
+
+:::
+
+**使用多个列分组**
+
+![多列分组](./img/function/function__2024-06-05-14-28-07.png)
+
+```sql
+SELECT department_id dept_id, job_id, SUM(salary)
+FROM employees
+GROUP BY department_id, job_id ;
+```
+
+#### WITH ROLLUP
+
+使用 WITH ROLLUP 关键字之后，在所有查询出的分组记录之后增加一条记录，该记录计算查询出所有记录的总和，即统计记录数量
+
+```bash
+mysql> SELECT IFNULL(department_id, '结果：'),AVG(salary)
+    -> FROM employees
+    -> WHERE department_id >80
+    -> GROUP BY department_id WITH ROLLUP;
++---------------------------------+--------------+
+| IFNULL(department_id, '结果：') | AVG(salary)  |
++---------------------------------+--------------+
+| 90                              | 19333.333333 |
+| 100                             |  8600.000000 |
+| 110                             | 10150.000000 |
+| 结果：                          | 11809.090909 |
++---------------------------------+--------------+
+4 rows in set (0.00 sec)
+
+```
+
+### HAVING
+
+::: danger 注意
+不能在 WHERE 子句中使用聚合函数
+:::
+
+过滤分组：HAVING 子句
+
+1. 行已经被分组
+2. 使用了聚合函数
+3. 满足 HAVING 子句中条件分组将被显示
+4. HAVING 不能单独使用，必须要跟 GROUP BY 一起使用
+
+![HAVING](./img/function/function__2024-06-05-14-38-50.png)
+
+示例：
+
+```bash
+mysql> SELECT department_id, MAX(salary)
+    -> FROM employees
+    -> GROUP BY department_id
+    -> HAVING MAX(salary)>10000 ;
++---------------+-------------+
+| department_id | MAX(salary) |
++---------------+-------------+
+|            20 |    13000.00 |
+|            30 |    11000.00 |
+|            80 |    14000.00 |
+|            90 |    24000.00 |
+|           100 |    12000.00 |
+|           110 |    12000.00 |
++---------------+-------------+
+6 rows in set (0.00 sec)
+
+```
+
+::: info WHERE 与 HAVING 的区别
+
+1. WHERE 可以直接使用表中的字段作为筛选条件，但不能使用分组中的计算函数作为筛选条件；HAVING 必须要与 GROUP BY 配合使用，可以把分组计算的函数和分组字段作为筛选条件
+
+   > 查询结构中，WHERE 在 GROUP BY 之前，所以无法对分组结果进行筛选
+
+2. 如果需要通过连接从关联表中获取需要的数据，WHERE 是先筛选后连接，而 HAVING 是先连接后筛选
+
+   > WHERE 比 HAVING 更高效，WHERE 先筛选，用一个筛选后较小的数据集和关联表进行连接，这样占用资源较少
+
+:::
