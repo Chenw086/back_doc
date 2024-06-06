@@ -142,7 +142,9 @@ export default defineConfig({
 						{ text: '查询', link: '/mysql/base/select' },
 						{ text: '运算符', link: '/mysql/base/operator' },
 						{ text: '排序与分页', link: '/mysql/base/orderLimit' },
-						{ text: '函数', link: '/mysql/base/function' }
+						{ text: '函数', link: '/mysql/base/function' },
+						{ text: '创建与管理库表', link: '/mysql/base/table' },
+						{ text: '数据增删改', link: '/mysql/base/handleData' }
 					]
 				}
 			],

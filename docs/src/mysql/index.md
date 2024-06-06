@@ -75,6 +75,25 @@ sql：mysql_8.026
 6. 保持字段名和类型的一致性，在命名字段并为其指定数据的时候一定要保持一致性
    > 假如数据类型在一个表里是整数，在另一个表中就变成字符串了
 
+**字段命名**
+
+表名、字段名必须使用小写字母或数字，禁止出现数字开头，禁止两个下划线中间只出现数字。数据库字段名的修改代价很大，因为无法进行预发布，所以字段名称需要慎重考虑
+
+- 正例：aliyun_admin，rdc_config，level3_name
+- 反例：AliyunAdmin，rdcConfig，level_3_name
+
+禁用保留字，如 desc、range、match、delayed 等，请参考 MySQL 官方保留字
+
+表必备三字段：id, gmt_create, gmt_modified
+
+> 说明：其中 id 必为主键，类型为 BIGINT UNSIGNED、单表时自增、步长为 1。gmt_create,gmt_modified 的类型均为 DATETIME 类型，前者现在时表示主动式创建，后者过去分词表示被动式更新
+
+表的命名最好是遵循 “业务名称\_表的作用”
+
+- 正例：alipay_task 、 force_project、 trade_config
+
+库名与应用名称尽量一致
+
 **数据导入指令**
 
 在命令行客户端登录 mysql，使用 source 指令导入
@@ -114,7 +133,7 @@ mysql> desc employees;
 
 **停止 sql 服务**
 
-任务管理器  --> 服务 --> 找到 mysql8.0 服务 --> 右键选择停止服务
+任务管理器 --> 服务 --> 找到 mysql8.0 服务 --> 右键选择停止服务
 
 ![01](./img/01.png)
 
@@ -126,9 +145,9 @@ mysql> desc employees;
 
 2. 残留文件清理
 
-服务目录：默认在C:\ProgramServer\MySQL
+服务目录：默认在 C:\ProgramServer\MySQL
 
-数据目录：默认在C:\ProgramData\MySQL
+数据目录：默认在 C:\ProgramData\MySQL
 
 ::: tip
 如果安装的时候自定义过，指定自定义指向的目录
@@ -149,12 +168,12 @@ HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\MySQL服务删除
 ```
 
 ::: tip
-注册表中的ControlSet001,ControlSet002,不一定是001和002,可能是ControlSet005、006之类
+注册表中的 ControlSet001,ControlSet002,不一定是 001 和 002,可能是 ControlSet005、006 之类
 :::
 
 4. 删除环境变量
 
-找到path环境变量，将其中关于mysql的环境变量删除，切记不要全部删除。
+找到 path 环境变量，将其中关于 mysql 的环境变量删除，切记不要全部删除。
 
 例如：删除 D:\develop_tools\mysql\MySQLServer8.0.26\bin; 这个部分
 
@@ -302,7 +321,7 @@ sys：作用是一种更容易被理解的方式展示 mysql 数据库服务器�
 mysql：保存了数据库服务器运行时需要的系统信息
 
 > 比如数据文件夹、当前使用的字符集、约束检查信息等
-:::
+> :::
 
 ### 使用
 
@@ -492,9 +511,9 @@ collation-server=utf8_general_ci
 
 ### 图形化工具报错
 
-有些图形界面工具，特别是旧版本的图形界面工具，在连接MySQL8时出现“Authentication plugin 'caching_sha2_password' cannot be loaded”错误。
+有些图形界面工具，特别是旧版本的图形界面工具，在连接 MySQL8 时出现“Authentication plugin 'caching_sha2_password' cannot be loaded”错误。
 
-出现这个原因是MySQL8之前的版本中加密规则是mysql_native_password，而在MySQL8之后，加密规则是caching_sha2_password。解决问题方法有两种，第一种是升级图形界面工具版本，第二种是把MySQL8用户登录密码加密规则还原成mysql_native_password。
+出现这个原因是 MySQL8 之前的版本中加密规则是 mysql_native_password，而在 MySQL8 之后，加密规则是 caching_sha2_password。解决问题方法有两种，第一种是升级图形界面工具版本，第二种是把 MySQL8 用户登录密码加密规则还原成 mysql_native_password。
 
 **修改密码**
 
@@ -603,10 +622,10 @@ Query OK, 1 row affected (0.00 sec)
 
 ## 目录结构与源码
 
-|目录结构| 说明 |
-|:--|:--|
-|bin目录 |所有MySQL的可执行文件。如：mysql.exe|
-|MySQLInstanceConfig.exe |数据库的配置向导，在安装时出现的内容|
-|data目录 |系统数据库所在的目录|
-|my.ini文件 |MySQL的主要配置文件|
-|c:\ProgramData\MySQL\MySQL Server 8.0\data\ |用户创建的数据库所在的目录|
+| 目录结构                                     | 说明                                   |
+| :------------------------------------------- | :------------------------------------- |
+| bin 目录                                     | 所有 MySQL 的可执行文件。如：mysql.exe |
+| MySQLInstanceConfig.exe                      | 数据库的配置向导，在安装时出现的内容   |
+| data 目录                                    | 系统数据库所在的目录                   |
+| my.ini 文件                                  | MySQL 的主要配置文件                   |
+| c:\ProgramData\MySQL\MySQL Server 8.0\data\  | 用户创建的数据库所在的目录             |
