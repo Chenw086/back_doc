@@ -53,14 +53,14 @@ export default defineConfig({
 		// },
 		nav: [
 			{
-				text: 'linux',
-				link: '/linux/',
-				activeMatch: '/linux/'
-			},
-			{
 				text: 'node',
 				link: '/node/',
 				activeMatch: '/node/'
+			},
+			{
+				text: 'linux',
+				link: '/linux/',
+				activeMatch: '/linux/'
 			},
 			{
 				text: 'nginx',
@@ -144,7 +144,8 @@ export default defineConfig({
 						{ text: '排序与分页', link: '/mysql/base/orderLimit' },
 						{ text: '函数', link: '/mysql/base/function' },
 						{ text: '创建与管理库表', link: '/mysql/base/table' },
-						{ text: '数据增删改', link: '/mysql/base/handleData' }
+						{ text: '数据增删改', link: '/mysql/base/handleData' },
+						{ text: '数据类型', link: '/mysql/base/type' }
 					]
 				}
 			],

@@ -6,12 +6,12 @@ hero:
   text: '围绕 Node 后台的一切'
   tagline: 写给未来的自己，避免二次错误，避免二次学习
   image:
-    src: /logo.svg
+    # src: /logo.svg
     alt: VitePress
   actions:
     - theme: brand
       text: 开始吧！
-      link: /linux/
+      link: /node/
 
 features:
   - title: 会标注所有来源

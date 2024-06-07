@@ -198,6 +198,13 @@ WHERE department_name = 'Finance';
 
 在 MySQL 8.0 中，CREATE TABLE 和 ALTER TABLE 中都支持增加计算列。
 
+::: warning 说明
+VIRTUAL： 计算列的值在查询时动态计算，不占用额外存储空间，但可能有性能开销。适用于不需要索引和外键的场景
+
+STORED：计算列的值存储在表中，占用额外存储空间，但查询性能可能更好。适用于需要索引和外键的场景
+
+:::
+
 ::: code-group
 
 ```sql [创建表]
