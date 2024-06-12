@@ -12,3 +12,4 @@ node_modules/
 **/typings/
 **/.nyc_output/
 dist
+**/cache/*
