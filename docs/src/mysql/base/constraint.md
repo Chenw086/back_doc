@@ -603,3 +603,699 @@ mysql> DESC pri_mul_student_course;
 ```
 
 :::
+
+## 自增列
+
+特点：
+
+1. 一个表最多只能一个自增列
+2. 当需要产生唯一标识符或顺序值时，可设置自增长
+3. 自增长列约束的列必须是键列（主键列，唯一键列）
+4. 自增约束的列的数据类型必须是整数类型
+5. 如果自增列指定了 0 和 null，会在当前最大值的基础上自增；如果自增列手动指定了具体值，直接赋值为具体值
+
+::: code-group
+
+```sql [非键列报错]
+mysql> create table employee(
+    -> eid int auto_increment,
+    -> ename varchar(20)
+    -> );
+ERROR 1075 (42000): Incorrect table definition; there can be only one auto column and it must be defined as a key
+```
+
+```sql [非 int 报错]
+mysql> create table employee(
+    -> eid int primary key,
+    -> ename varchar(20) unique key auto_increment
+    -> );
+ERROR 1063 (42000): Incorrect column specifier for column 'ename'
+```
+
+:::
+
+**指定自增约束**
+
+- 建表时
+
+::: code-group
+
+```sql [语法]
+create table 表名称(
+  字段名 数据类型 primary key auto_increment,
+  字段名 数据类型 unique key not null,
+  字段名 数据类型 unique key,
+  字段名 数据类型 not null default 默认值,
+);
+
+create table 表名称(
+  字段名 数据类型 default 默认值 ,
+  字段名 数据类型 unique key auto_increment,
+  字段名 数据类型 not null default 默认值,,
+  primary key(字段名)
+);
+```
+
+```sql [示例]
+mysql> create table incro_employee(
+    -> eid int primary key auto_increment,
+    -> ename varchar(20)
+    -> );
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> desc incro_employee;
++-------+-------------+------+-----+---------+----------------+
+| Field | Type        | Null | Key | Default | Extra          |
++-------+-------------+------+-----+---------+----------------+
+| eid   | int         | NO   | PRI | NULL    | auto_increment |
+| ename | varchar(20) | YES  |     | NULL    |                |
++-------+-------------+------+-----+---------+----------------+
+2 rows in set (0.00 sec)
+```
+
+:::
+
+- 建表后
+
+::: code-group
+
+```sql [语法]
+alter table 表名称 modify 字段名 数据类型 auto_increment;
+```
+
+```sql [exam 1]
+create table inc_employee_01(
+  eid int primary key ,
+  ename varchar(20)
+);
+
+alter table inc_employee_01 modify eid int auto_increment;
+
+mysql> desc inc_employee_01;
++-------+-------------+------+-----+---------+----------------+
+| Field | Type        | Null | Key | Default | Extra          |
++-------+-------------+------+-----+---------+----------------+
+| eid   | int         | NO   | PRI | NULL    | auto_increment |
+| ename | varchar(20) | YES  |     | NULL    |                |
++-------+-------------+------+-----+---------+----------------+
+2 rows in set (0.00 sec)
+```
+
+:::
+
+**删除自增约束**
+
+::: code-group
+
+```sql [语法]
+alter table 表名称 modify 字段名 数据类型;
+-- 去掉auto_increment相当于删除
+```
+
+```sql [exam]
+mysql> ALTER TABLE inc_employee_01 modify eid int;
+Query OK, 0 rows affected (0.01 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> desc inc_employee_01;
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| eid   | int         | NO   | PRI | NULL    |       |
+| ename | varchar(20) | YES  |     | NULL    |       |
++-------+-------------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+```
+
+:::
+
+## 外键约束
+
+限定某个表的引用完整性
+
+![外键约束](./img/constraint/constraint__2024-06-12-23-09-14.png)
+
+**主表与从表**
+
+主表：被引用的表，被参考的表
+
+从表：引用别人的表，参考别人的表
+
+例如：学生表、课程表、选课表：选课表的学生和课程要分别参考学生表和课程表，学生表和课程表是主表，选课表是从表
+
+**特点**
+
+1. 从表的外键列，必须引用主表的主键或唯一约束的列，因为被依赖的值必须是唯一
+2. 在创建外键约束时，如果不给外键约束命名，默认名不是列名，而是自动产生一个外键名，也可以指定外键约束名
+3. 创建表时就指定外键约束的话，先指定主表，再创建从表
+4. 删表时，先删从表，再删除主表
+5. 当主表的记录被从表参照时，主表记录不允许删除，如果要删除数据，需要先删除从表中依赖该记录的数据，然后才可以删除主表的数据
+6. 在从表中指定外键约束，并且一个表可以建立多个外键约束
+7. 从表的外键列与主表被参照的列名字可以不相同，但是数据类型必须一样，逻辑意义一致
+8. 当创建外键约束时，系统默认会在所在的列上建立对应的普通索引，索引名是外键约束名
+9. 删除外键约束后，必须手动删除对应的索引
+
+**添加外键约束**
+
+- 建表时
+
+::: code-group
+
+```sql [语法]
+create table 主表名称(
+  字段1 数据类型 primary key,
+  字段2 数据类型
+);
+
+create table 从表名称(
+  字段1 数据类型 primary key,
+  字段2 数据类型,
+  [CONSTRAINT <外键约束名称>] FOREIGN KEY（从表的某个字段) references 主表名(被参考字段)
+);
+-- FOREIGN KEY: 在表级指定子表中的列
+-- REFERENCES: 标示在父表中的列
+```
+
+```sql [exam]
+create table foreign_dept( -- 主表
+  did int primary key, -- 部门编号
+  dname varchar(50) -- 部门名称
+);
+
+create table foreign_emp(-- 从表
+  eid int primary key, -- 员工编号
+  ename varchar(5), -- 员工姓名
+  deptid int, -- 员工所在的部门
+  foreign key (deptid) references dept(did) -- 在从表中指定外键约束
+  -- emp表的deptid和和dept表的did的数据类型一致，意义都是表示部门的编号
+);
+```
+
+:::
+
+- 建表后
+
+::: code-group
+
+```sql [语法]
+ALTER TABLE 从表名 ADD [CONSTRAINT 约束名]
+FOREIGN KEY (从表的字段) REFERENCES 主表名(被引用字段) [on update xx][on delete xx];
+```
+
+```sql [exam]
+create table foreign_dept_01(
+  did int primary key, -- 部门编号
+  dname varchar(50) -- 部门名称
+);
+
+create table foreign_emp_01(
+  eid int primary key, -- 员工编号
+  ename varchar(5), -- 员工姓名
+  deptid int -- 员工所在的部门
+);
+
+mysql> alter table foreign_emp_01 add foreign  key(deptid) references foreign
+_dept_01(did);
+Query OK, 0 rows affected (0.02 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> desc foreign_emp_01;
++--------+------------+------+-----+---------+-------+
+| Field  | Type       | Null | Key | Default | Extra |
++--------+------------+------+-----+---------+-------+
+| eid    | int        | NO   | PRI | NULL    |       |
+| ename  | varchar(5) | YES  |     | NULL    |       |
+| deptid | int        | YES  | MUL | NULL    |       |
++--------+------------+------+-----+---------+-------+
+3 rows in set (0.01 sec)
+
+mysql> desc foreign_dept_01;
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| did   | int         | NO   | PRI | NULL    |       |
+| dname | varchar(50) | YES  |     | NULL    |       |
++-------+-------------+------+-----+---------+-------+
+2 rows in set (0.01 sec)
+
+mysql> SELECT * FROM information_schema.table_constraints WHERE table_name =
+'foreign_emp_01';
++--------------------+-------------------+-----------------------+--------------+----------------+-----------------+----------+
+| CONSTRAINT_CATALOG | CONSTRAINT_SCHEMA | CONSTRAINT_NAME       | TABLE_SCHEMA | TABLE_NAME     | CONSTRAINT_TYPE | ENFORCED |
++--------------------+-------------------+-----------------------+--------------+----------------+-----------------+----------+
+| def                | test              | PRIMARY               | test         | foreign_emp_01 | PRIMARY KEY     | YES      |
+| def                | test              | foreign_emp_01_ibfk_1 | test         | foreign_emp_01 | FOREIGN KEY     | YES      |
++--------------------+-------------------+-----------------------+--------------+----------------+-----------------+----------+
+2 rows in set (0.00 sec)
+```
+
+:::
+
+::: danger
+添加外键约束后，主表的修改和删除数据受约束
+
+添加外键约束后，从表的删除和修改数据受约束
+
+在从表上建立外键，要求主表必须存在
+
+删除主表时，要求从表先删除，或者从表中外键引用该主表的关系先删除
+
+:::
+
+**约束等级**
+
+::: warning 建议
+对于外键约束，最好是采用: `ON UPDATE CASCADE ON DELETE RESTRICT` 的方式
+:::
+
+- Cascade 方式 ：在父表上 update/delete 记录时，同步 update/delete 掉子表的匹配记录
+
+- Set null 方式 ：在父表上 update/delete 记录时，将子表上匹配记录的列设为 null，但是要注意子表的外键列不能为 not null
+
+- No action 方式 ：如果子表中有匹配的记录，则不允许对父表对应候选键进行 update/delete 操作
+
+- Restrict 方式 ：同 no action， 都是立即检查外键约束
+
+- Set default 方式 （在可视化工具 SQLyog 中可能显示空白）：父表有变更时，子表将外键列设置成一个默认的值，但 Innodb 不能识别
+
+**演示：** on update cascade on delete set null
+
+::: code-group
+
+```sql [建表插入数据]
+create table foreign1_dept(
+  did int primary key, -- 部门编号
+  dname varchar(50) -- 部门名称
+);
+create table foreign1_emp(
+  eid int primary key, -- 员工编号
+  ename varchar(5), -- 员工姓名
+  deptid int, -- 员工所在的部门
+  foreign key (deptid) references dept(did) on update cascade on delete set null
+  -- 把修改操作设置为级联修改等级，把删除操作设置为set null等级
+);
+
+insert into foreign1_dept values(1001,'教学部');
+insert into foreign1_dept values(1002, '财务部');
+insert into foreign1_dept values(1003, '咨询部');
+insert into foreign1_emp values(1,'张三',1001); -- 在添加这条记录时，要求部门表有1001部门
+insert into foreign1_emp values(2,'李四',1001);
+insert into foreign1_emp values(3,'王五',1002);
+
+```
+
+```sql [更改数据]
+-- 修改主表成功，从表也跟着修改，修改了主表被引用的字段1002为1004，从表的引用字段就跟着修改为1004了
+mysql> update foreign1_dept set did = 1004 where did = 1002;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1 Changed: 1 Warnings: 0
+
+mysql> select * from foreign1_dept;
++------+--------+
+| did | dname |
++------+--------+
+| 1001 | 教学部 |
+| 1003 | 咨询部 |
+| 1004 | 财务部 | -- 原来是1002，修改为1004
++------+--------+
+3 rows in set (0.00 sec)
+mysql> select * from foreign1_emp;
++-----+-------+--------+
+| eid | ename | deptid |
++-----+-------+--------+
+| 1 | 张三 | 1001 |
+| 2 | 李四 | 1001 |
+| 3 | 王五 | 1004 | -- 原来是1002，跟着修改为1004
++-----+-------+--------+
+3 rows in set (0.00 sec)
+```
+
+```sql [删除数据]
+-- 删除主表的记录成功，从表对应的字段的值被修改为null
+mysql> delete from dept where did = 1001;
+Query OK, 1 row affected (0.01 sec)
+mysql> select * from dept;
++------+--------+
+| did | dname | -- 记录1001部门被删除了
++------+--------+
+| 1003 | 咨询部 |
+| 1004 | 财务部 |
++------+--------+
+2 rows in set (0.00 sec)
+mysql> select * from emp;
++-----+-------+--------+
+| eid | ename | deptid |
++-----+-------+--------+
+| 1 | 张三 | NULL | -- 原来引用1001部门的员工，deptid字段变为null
+| 2 | 李四 | NULL |
+| 3 | 王五 | 1004 |
++-----+-------+--------+
+3 rows in set (0.00 sec)
+```
+
+:::
+
+**演示：** on update set null on delete cascade
+
+::: code-group
+
+```sql [建表插入数据]
+create table dept(
+  did int primary key, -- 部门编号
+  dname varchar(50) -- 部门名称
+);
+create table emp(
+  eid int primary key, -- 员工编号
+  ename varchar(5), -- 员工姓名
+  deptid int, -- 员工所在的部门
+  foreign key (deptid) references dept(did) on update set null on delete cascade
+  -- 把修改操作设置为set null等级，把删除操作设置为级联删除等级
+);
+
+insert into dept values(1001,'教学部');
+insert into dept values(1002, '财务部');
+insert into dept values(1003, '咨询部');
+insert into emp values(1,'张三',1001);
+insert into emp values(2,'李四',1001);
+insert into emp values(3,'王五',1002);
+
+mysql> select * from dept;
++------+--------+
+| did | dname |
++------+--------+
+| 1001 | 教学部 |
+| 1002 | 财务部 |
+| 1003 | 咨询部 |
++------+--------+
+3 rows in set (0.00 sec)
+mysql> select * from emp;
++-----+-------+--------+
+| eid | ename | deptid |
++-----+-------+--------+
+| 1 | 张三 | 1001 |
+| 2 | 李四 | 1001 |
+| 3 | 王五 | 1002 |
++-----+-------+--------+
+3 rows in set (0.00 sec)
+```
+
+```sql [修改]
+-- 修改主表，从表对应的字段设置为null
+mysql> update dept set did = 1004 where did = 1002;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1 Changed: 1 Warnings: 0
+mysql> select * from dept;
++------+--------+
+| did | dname |
++------+--------+
+| 1001 | 教学部 |
+| 1003 | 咨询部 |
+| 1004 | 财务部 | -- 原来did是1002
++------+--------+
+3 rows in set (0.00 sec)
+
+mysql> select * from emp;
++-----+-------+--------+
+| eid | ename | deptid |
++-----+-------+--------+
+| 1 | 张三 | 1001 |
+| 2 | 李四 | 1001 |
+| 3 | 王五 | NULL | -- 原来deptid是1002，因为部门表1002被修改了，1002没有对应的了，就设置为
+null
++-----+-------+--------+
+3 rows in set (0.00 sec)
+```
+
+```sql [删除]
+-- 删除主表的记录成功，主表的1001行被删除了，从表相应的记录也被删除了
+mysql> delete from dept where did=1001;
+Query OK, 1 row affected (0.00 sec)
+mysql> select * from dept;
++------+--------+
+| did | dname | -- 部门表中1001部门被删除
++------+--------+
+| 1003 | 咨询部 |
+| 1004 | 财务部 |
++------+--------+
+2 rows in set (0.00 sec)
+mysql> select * from emp;
++-----+-------+--------+
+| eid | ename | deptid |-- 原来1001部门的员工也被删除了
++-----+-------+--------+
+| 3 | 王五 | NULL |
++-----+-------+--------+
+1 row in set (0.00 sec)
+```
+
+:::
+
+**删除外键约束**
+
+::: code-group
+
+```sql [删除流程]
+(1)第一步先查看约束名和删除外键约束
+SELECT * FROM information_schema.table_constraints WHERE table_name = '表名称'; -- 查看某个表的约束名
+
+ALTER TABLE 从表名 DROP FOREIGN KEY 外键约束名;
+
+(2)第二步查看索引名和删除索引。（注意，只能手动删除）
+SHOW INDEX FROM 表名称; #查看某个表的索引名
+ALTER TABLE 从表名 DROP INDEX 索引名;
+```
+
+```sql [示例原有结构]
+mysql> SELECT * FROM information_schema.table_constraints WHERE table_name =
+'foreign_emp_01';
++--------------------+-------------------+-----------------------+--------------+----------------+-----------------+----------+
+| CONSTRAINT_CATALOG | CONSTRAINT_SCHEMA | CONSTRAINT_NAME       | TABLE_SCHEMA | TABLE_NAME     | CONSTRAINT_TYPE | ENFORCED |
++--------------------+-------------------+-----------------------+--------------+----------------+-----------------+----------+
+| def                | test              | PRIMARY               | test         | foreign_emp_01 | PRIMARY KEY     | YES      |
+| def                | test              | foreign_emp_01_ibfk_1 | test         | foreign_emp_01 | FOREIGN KEY     | YES      |
++--------------------+-------------------+-----------------------+--------------+----------------+-----------------+----------+
+2 rows in set (0.00 sec)
+
+mysql> SHOW INDEX FROM foreign_emp_01;
++----------------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| Table          | Non_unique | Key_name | Seq_in_index | Column_name | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment | Visible | Expression |
++----------------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| foreign_emp_01 |          0 | PRIMARY  |            1 | eid         | A         |           0 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| foreign_emp_01 |          1 | deptid   |            1 | deptid      | A         |           0 |     NULL |   NULL | YES  | BTREE      |         |               | YES     | NULL       |
++----------------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+2 rows in set (0.00 sec)
+```
+
+```sql [删除后结构]
+mysql> ALTER TABLE foreign_emp_01 DROP FOREIGN KEY foreign_emp_01_ibfk_1;
+Query OK, 0 rows affected (0.01 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> ALTER TABLE foreign_emp_01 DROP INDEX deptid;
+Query OK, 0 rows affected (0.01 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> SELECT * FROM information_schema.table_constraints WHERE table_name =
+'foreign_emp_01';
++--------------------+-------------------+-----------------+--------------+----------------+-----------------+----------+
+| CONSTRAINT_CATALOG | CONSTRAINT_SCHEMA | CONSTRAINT_NAME | TABLE_SCHEMA | TABLE_NAME     | CONSTRAINT_TYPE | ENFORCED |
++--------------------+-------------------+-----------------+--------------+----------------+-----------------+----------+
+| def                | test              | PRIMARY         | test         | foreign_emp_01 | PRIMARY KEY     | YES      |
++--------------------+-------------------+-----------------+--------------+----------------+-----------------+----------+
+1 row in set (0.00 sec)
+
+mysql> SHOW INDEX FROM foreign_emp_01;
++----------------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| Table          | Non_unique | Key_name | Seq_in_index | Column_name | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment | Visible | Expression |
++----------------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| foreign_emp_01 |          0 | PRIMARY  |            1 | eid         | A         |           0 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
++----------------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+1 row in set (0.01 sec)
+
+mysql> DESC foreign_emp_01;
++--------+------------+------+-----+---------+-------+
+| Field  | Type       | Null | Key | Default | Extra |
++--------+------------+------+-----+---------+-------+
+| eid    | int        | NO   | PRI | NULL    |       |
+| ename  | varchar(5) | YES  |     | NULL    |       |
+| deptid | int        | YES  |     | NULL    |       |
++--------+------------+------+-----+---------+-------+
+3 rows in set (0.01 sec)
+```
+
+:::
+
+::: danger 提示
+在 MySQL 里，外键约束是有成本的，需要消耗系统资源。对于大并发的 SQL 操作，有可能会不适合。比如大型网站的中央数据库，可能会 因为外键约束的系统开销而变得非常慢 。
+
+所以， MySQL 允许你不使用系统自带的外键约束，在 应用层面 完成检查数据一致性的逻辑。
+
+即使你不用外键约束，也要想办法通过应用层面的附加逻辑，来实现外键约束的功能，确保数据的一致性
+
+:::
+
+**阿里规范：**
+
+不得使用外键与级联，一切外键概念必须在应用层解决
+
+> （概念解释）学生表中的 student_id 是主键，那么成绩表中的 student_id 则为外键。如果更新学生表中的 student_id，同时触发成绩表中的 student_id 更新，即为级联更新。外键与级联更新适用于 单机低并发 ，不适合 分布式 、 高并发集群 ；级联更新是强阻塞，存在数据库 更新风暴 的风险；外键影响数据库的 插入速度
+
+## CHECK
+
+::: warning
+MySQL5.7 可以使用 check 约束，但 check 约束对数据验证没有任何作用。添加数据时，没有任何错误或警告
+:::
+
+::: code-group
+
+```sql [建立结构]
+mysql> CREATE TABLE check_temp(
+    ->   id INT PRIMARY KEY AUTO_INCREMENT,
+    ->   NAME VARCHAR(20),
+    ->   age INT CHECK(age > 20),
+    ->   sex char(1) CHECK(sex IN ('男', '女'))
+    -> );
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> DESC check_temp;
++-------+-------------+------+-----+---------+----------------+
+| Field | Type        | Null | Key | Default | Extra          |
++-------+-------------+------+-----+---------+----------------+
+| id    | int         | NO   | PRI | NULL    | auto_increment |
+| NAME  | varchar(20) | YES  |     | NULL    |                |
+| age   | int         | YES  |     | NULL    |                |
+| sex   | char(1)     | YES  |     | NULL    |                |
++-------+-------------+------+-----+---------+----------------+
+4 rows in set (0.00 sec)
+```
+
+```sql [插入验证]
+mysql> INSERT INTO check_temp VALUES(NULL, 'TEST1', 21,'女');
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO check_temp VALUES(NULL, 'TEST1', 21,'2');
+ERROR 3819 (HY000): Check constraint 'check_temp_chk_2' is violated.
+
+mysql> INSERT INTO check_temp VALUES(NULL, 'TEST1', 19,'男');
+ERROR 3819 (HY000): Check constraint 'check_temp_chk_1' is violated.
+
+mysql> SELECT * FROM check_temp;
++----+-------+------+------+
+| id | NAME  | age  | sex  |
++----+-------+------+------+
+|  1 | TEST1 |   21 | 女   |
++----+-------+------+------+
+1 row in set (0.00 sec)
+```
+
+```sql [查看限制信息]
+mysql> SELECT * FROM information_schema.table_constraints WHERE table_name = 'check_temp';
++--------------------+-------------------+------------------+--------------+------------+-----------------+----------+
+| CONSTRAINT_CATALOG | CONSTRAINT_SCHEMA | CONSTRAINT_NAME  | TABLE_SCHEMA | TABLE_NAME | CONSTRAINT_TYPE | ENFORCED |
++--------------------+-------------------+------------------+--------------+------------+-----------------+----------+
+| def                | test              | PRIMARY          | test         | check_temp | PRIMARY KEY     | YES      |
+| def                | test              | check_temp_chk_1 | test         | check_temp | CHECK           | YES      |
+| def                | test              | check_temp_chk_2 | test         | check_temp | CHECK           | YES      |
++--------------------+-------------------+------------------+--------------+------------+-----------------+----------+
+3 rows in set (0.00 sec)
+
+mysql> SHOW INDEX FROM check_temp;
++------------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| Table      | Non_unique | Key_name | Seq_in_index | Column_name | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment | Visible | Expression |
++------------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| check_temp |          0 | PRIMARY  |            1 | id          | A         |           1 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
++------------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+1 row in set (0.00 sec)
+```
+
+:::
+
+## DEFAULT
+
+给某个字段指定默认值，一旦设置默认值，在插入数据时，如果此字段没有显示赋值，则赋值为默认值
+
+默认值一般不在主键与唯一键上加
+
+**加默认值**
+
+- 建表时
+
+::: code-group
+
+```sql [语法]
+create table 表名称(
+  字段名 数据类型 primary key,
+  字段名 数据类型 unique key not null,
+  字段名 数据类型 unique key,
+  字段名 数据类型 not null default 默认值,
+);
+
+create table 表名称(
+  字段名 数据类型 default 默认值 ,
+  字段名 数据类型 not null default 默认值,
+  字段名 数据类型 not null default 默认值,
+  primary key(字段名),
+  unique key(字段名)
+);
+```
+
+```sql [exam]
+create table default_employee(
+  eid int primary key,
+  ename varchar(20) not null,
+  gender char default '男',
+  tel char(11) not null default '' -- 默认是空字符串
+);
+
+mysql> SELECT * FROM default_employee;
++-----+--------+--------+-----+
+| eid | ename  | gender | tel |
++-----+--------+--------+-----+
+|   2 | 天琪   | 男     |     |
++-----+--------+--------+-----+
+1 row in set (0.00 sec)
+```
+
+```SQL [查看表结构]
+mysql> DESC default_employee;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| eid    | int         | NO   | PRI | NULL    |       |
+| ename  | varchar(20) | NO   |     | NULL    |       |
+| gender | char(1)     | YES  |     | 男      |       |
+| tel    | char(11)    | NO   |     |         |       |
++--------+-------------+------+-----+---------+-------+
+4 rows in set (0.00 sec)
+
+
+```
+
+:::
+
+- 建表后
+
+```sql
+-- 如果这个字段原来有非空约束，你还保留非空约束，那么在加默认值约束时，还得保留非空约束，否则非空约束就被删除了
+
+alter table 表名称 modify 字段名 数据类型 default 默认值 [not null];
+```
+
+**删除默认约束**
+
+```sql
+alter table 表名称 modify 字段名 数据类型 ;-- 删除默认值约束，也不保留非空约束
+
+alter table 表名称 modify 字段名 数据类型 not null; -- 删除默认值约束，保留非空约束
+```
+
+::: warning 问答
+`为什么建表时，加 not null default '' 或 default 0 ？`
+
+1. 不想让表中出现 null 值，不好比较，比较时只能用专门的 is null 和 is not null 来比较。碰到运算符，通常返回 null
+2. 效率不高。影响提高索引效果。因此，我们往往在建表时 not null default '' 或 default 0
+
+`带AUTO_INCREMENT约束的字段值是从1开始的吗？`
+
+在 MySQL 中，默认 AUTO_INCREMENT 的初始值是 1，每新增一条记录，字段值自动加 1。设置自增属性（AUTO_INCREMENT）的时候，还可以指定第一条插入记录的自增字段的值，这样新插入的记录的自增字段值从初始值开始递增，如在表中插入第一条记录，同时指定 id 值为 5，则以后插入的记录的 id 值就会从 6 开始往上增加。添加主键约束时，往往需要设置字段自动增加属性
+
+:::
