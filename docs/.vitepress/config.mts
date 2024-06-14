@@ -148,7 +148,8 @@ export default defineConfig({
 						{ text: '数据类型', link: '/mysql/base/type' },
 						{ text: '约束', link: '/mysql/base/constraint' },
 						{ text: '视图', link: '/mysql/base/view' },
-						{ text: '存储过程与函数', link: '/mysql/base/procedure' }
+						{ text: '存储过程与函数', link: '/mysql/base/procedure' },
+						{ text: '变量、流程控制与游标', link: '/mysql/base/variable' }
 					]
 				}
 			],
