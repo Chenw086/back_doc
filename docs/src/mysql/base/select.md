@@ -1978,3 +1978,333 @@ WHERE 2 < (
     WHERE l.`location_id` = d.`location_id`
 );
 ```
+
+## 公用表达式
+
+公用表表达式（或通用表表达式）简称为 CTE（Common Table Expressions）。CTE 是一个命名的临时结果集，作用范围是当前语句。CTE 可以理解成一个可以复用的子查询，当然跟子查询还是有点区别的，CTE 可以引用其他 CTE，但子查询不能引用其他子查询。所以，可以考虑代替子查询
+
+依据语法结构和执行方式的不同，公用表表达式分为 普通公用表表达式 和 递归公用表表达式 2 种
+
+### 普通公用表达式
+
+```sql [grammar]
+WITH CTE名称
+AS （子查询）
+SELECT|DELETE|UPDATE 语句;
+```
+
+`普通公用表表达式类似于子查询，不过，跟子查询不同的是，它可以被多次引用，而且可以被其他的普通公用表表达式所引用`
+
+- 示例：
+
+查询员工所在部门的信息
+
+::: code-group
+
+```sql [不用表达式]
+SELECT * FROM departments
+WHERE department_id IN (
+    SELECT DISTINCT department_id
+    FROM employees
+);
+```
+
+```sql [使用表达式]
+WITH emp_dept_id
+AS (SELECT DISTINCT department_id FROM employees)
+SELECT *
+FROM departments d JOIN emp_dept_id e
+ON d.department_id = e.department_id;
+```
+
+:::
+
+::: warning 提示
+跟子查询相比，公用表表达式有一个优点，就是定义过公用表表达式之后的查询，可以像一个表一样多次引用公用表表达式，而子查询则不能
+:::
+
+### 递归公用表达式
+
+递归公用表表达式也是一种公用表表达式，只不过，除了普通公用表表达式的特点以外，它还有自己的特点，就是可以调用自己。
+
+```sql
+WITH RECURSIVE
+CTE名称 AS （子查询）
+SELECT|DELETE|UPDATE 语句;
+```
+
+递归公用表表达式由 2 部分组成，分别是种子查询和递归查询，中间通过关键字 UNION [ALL]进行连接。这里的种子查询，意思就是获得递归的初始值。这个查询只会运行一次，以创建初始数据集，之后递归查询会一直执行，直到没有任何新的查询数据产生，递归返回
+
+- 示例：
+
+针对于我们常用的 employees 表，包含 employee_id，last_name 和 manager_id 三个字段。如果 a 是 b 的管理者，那么，我们可以把 b 叫做 a 的下属，如果同时 b 又是 c 的管理者，那么 c 就是 b 的下属，是 a 的下下属
+
+如果不使用递归表达式：
+
+1. 先找出初代管理者，就是不以任何别人为管理者的人，把结果存入临时表
+2. 找出所有以初代管理者为管理者的人，得到一个下属集，把结果存入临时表
+3. 找出所有以下属为管理者的人，得到一个下下属集，把结果存入临时表
+4. 找出所有以下下属为管理者的人，得到一个结果集
+
+如果使用公用表达式，思路：
+
+1. 用递归公用表表达式中的种子查询，找出初代管理者。字段 n 表示代次，初始值为 1，表示是第一代管理者
+2. 用递归公用表表达式中的递归查询，查出以这个递归公用表表达式中的人为管理者的人，并且代次的值加 1。直到没有人以这个递归公用表表达式中的人为管理者了，递归返回
+3. 在最后的查询中，选出所有代次大于等于 3 的人，他们肯定是第三代及以上代次的下属了，也就是下下属了。这样就得到了我们需要的结果集
+
+**代码实现：**
+
+找到大于 3 代的人员
+
+```sql
+WITH RECURSIVE cte
+AS
+(
+    SELECT employee_id,last_name,manager_id,1 AS n FROM employees WHERE employee_id = 100
+    -- 种子查询，找到第一代领导
+    UNION ALL
+    SELECT a.employee_id,a.last_name,a.manager_id,n+1 FROM employees AS a JOIN cte
+    ON (a.manager_id = cte.employee_id) -- 递归查询，找出以递归公用表表达式的人为领导的人
+)
+SELECT employee_id,last_name FROM cte WHERE n >= 3;
+```
+
+更进一步，根据 emp 表，找出每个人对应的上级与上上级
+
+::: code-group
+
+```sql [resolve]
+WITH RECURSIVE cte AS (
+    -- 初始查询，获取第一个员工及其上级
+    SELECT
+        employee_id,
+        last_name,
+        manager_id,
+        1 AS n
+    FROM
+        employees
+    WHERE
+        manager_id IS NULL  -- 根节点（领导）
+    UNION ALL
+    -- 递归查询，获取每个员工及其上级
+    SELECT
+        a.employee_id,
+        a.last_name,
+        a.manager_id,
+        n + 1
+    FROM
+        employees AS a
+        JOIN cte ON a.manager_id = cte.employee_id
+)
+SELECT
+    c1.employee_id,
+    c1.last_name,
+    c1.manager_id AS manager_id,
+    c2.manager_id AS upper_manager_id
+FROM
+    cte c1
+    LEFT JOIN employees c2 ON c1.manager_id = c2.employee_id
+ORDER BY
+    c1.employee_id;
+
+```
+
+```sql [res]
++-------------+------------+------------+------------------+
+| employee_id | last_name  | manager_id | upper_manager_id |
++-------------+------------+------------+------------------+
+|         100 | King       |       NULL |             NULL |
+|         101 | Kochhar    |        100 |             NULL |
+|         102 | De Haan    |        100 |             NULL |
+|         103 | Hunold     |        102 |              100 |
+|         104 | Ernst      |        103 |              102 |
+|         105 | Austin     |        103 |              102 |
+|         106 | Pataballa  |        103 |              102 |
+|         107 | Lorentz    |        103 |              102 |
+|         108 | Greenberg  |        101 |              100 |
+...
+|         197 | 123        |        124 |              100 |
+|         198 | 123        |        124 |              100 |
+|         199 | 123        |        124 |              100 |
+|         200 | Whalen     |        101 |              100 |
+|         201 | Hartstein  |        100 |             NULL |
+|         202 | Fay        |        201 |              100 |
+|         203 | Mavris     |        101 |              100 |
+|         204 | Baer       |        101 |              100 |
+|         205 | Higgins    |        101 |              100 |
+|         206 | Gietz      |        205 |              101 |
++-------------+------------+------------+------------------+
+107 rows in set (0.00 sec)
+```
+
+:::
+
+更进一步一步， 以 json 树形结构返回
+
+::: code-group
+
+```sql [resolve]
+WITH RECURSIVE cte AS (
+    -- 初始查询，获取根节点（领导）
+    SELECT
+        employee_id,
+        last_name,
+        manager_id,
+        CAST(
+            JSON_OBJECT(
+                'employee_id', employee_id,
+                'last_name', last_name,
+                'manager_id', manager_id,
+                'subordinates', JSON_ARRAY()
+            ) AS JSON
+        ) AS json_tree
+    FROM
+        employees
+    WHERE
+        manager_id IS NULL
+
+    UNION ALL
+
+    -- 递归查询，构建每个员工的 JSON 对象，并将其添加到上级的 subordinates 数组中
+    SELECT
+        e.employee_id,
+        e.last_name,
+        e.manager_id,
+        JSON_SET(
+            cte.json_tree,
+            CONCAT('$.subordinates[', JSON_LENGTH(cte.json_tree->'$.subordinates'), ']'),
+            JSON_OBJECT(
+                'employee_id', e.employee_id,
+                'last_name', e.last_name,
+                'manager_id', e.manager_id,
+                'subordinates', JSON_ARRAY()
+            )
+        ) AS json_tree
+    FROM
+        employees e
+        JOIN cte ON e.manager_id = cte.employee_id
+)
+SELECT
+    json_tree
+FROM
+    cte
+WHERE
+    manager_id IS NULL;
+
+```
+
+```json [res]
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| json_tree                                                                                                                                                                                                                                                                                                                                        |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": []}                                                                                                                                                                                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}]}                                                                                                                                                                             |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "De Haan", "manager_id": 100, "employee_id": 102, "subordinates": []}]}                                                                                                                                                                             |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Raphaely", "manager_id": 100, "employee_id": 114, "subordinates": []}]}                                                                                                                                                                            |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 120, "subordinates": []}]}                                                                                                                                                                                 |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 121, "subordinates": []}]}                                                                                                                                                                                 |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 122, "subordinates": []}]}                                                                                                                                                                                 |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 123, "subordinates": []}]}                                                                                                                                                                                 |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 124, "subordinates": []}]}                                                                                                                                                                                 |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Russell", "manager_id": 100, "employee_id": 145, "subordinates": []}]}                                                                                                                                                                             |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Partners", "manager_id": 100, "employee_id": 146, "subordinates": []}]}                                                                                                                                                                            |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Errazuriz", "manager_id": 100, "employee_id": 147, "subordinates": []}]}                                                                                                                                                                           |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Cambrault", "manager_id": 100, "employee_id": 148, "subordinates": []}]}                                                                                                                                                                           |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Zlotkey", "manager_id": 100, "employee_id": 149, "subordinates": []}]}                                                                                                                                                                             |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Hartstein", "manager_id": 100, "employee_id": 201, "subordinates": []}]}                                                                                                                                                                           |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Greenberg", "manager_id": 101, "employee_id": 108, "subordinates": []}]}                                                                                      |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Whalen", "manager_id": 101, "employee_id": 200, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Mavris", "manager_id": 101, "employee_id": 203, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Baer", "manager_id": 101, "employee_id": 204, "subordinates": []}]}                                                                                           |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Higgins", "manager_id": 101, "employee_id": 205, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "De Haan", "manager_id": 100, "employee_id": 102, "subordinates": []}, {"last_name": "Hunold", "manager_id": 102, "employee_id": 103, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Raphaely", "manager_id": 100, "employee_id": 114, "subordinates": []}, {"last_name": "Khoo", "manager_id": 114, "employee_id": 115, "subordinates": []}]}                                                                                          |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Raphaely", "manager_id": 100, "employee_id": 114, "subordinates": []}, {"last_name": "Baida", "manager_id": 114, "employee_id": 116, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Raphaely", "manager_id": 100, "employee_id": 114, "subordinates": []}, {"last_name": "Tobias", "manager_id": 114, "employee_id": 117, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Raphaely", "manager_id": 100, "employee_id": 114, "subordinates": []}, {"last_name": "Himuro", "manager_id": 114, "employee_id": 118, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Raphaely", "manager_id": 100, "employee_id": 114, "subordinates": []}, {"last_name": "Colmenares", "manager_id": 114, "employee_id": 119, "subordinates": []}]}                                                                                    |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 120, "subordinates": []}, {"last_name": "123", "manager_id": 120, "employee_id": 125, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 120, "subordinates": []}, {"last_name": "123", "manager_id": 120, "employee_id": 126, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 120, "subordinates": []}, {"last_name": "123", "manager_id": 120, "employee_id": 127, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 120, "subordinates": []}, {"last_name": "123", "manager_id": 120, "employee_id": 128, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 120, "subordinates": []}, {"last_name": "123", "manager_id": 120, "employee_id": 180, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 120, "subordinates": []}, {"last_name": "123", "manager_id": 120, "employee_id": 181, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 120, "subordinates": []}, {"last_name": "123", "manager_id": 120, "employee_id": 182, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 120, "subordinates": []}, {"last_name": "123", "manager_id": 120, "employee_id": 183, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 121, "subordinates": []}, {"last_name": "123", "manager_id": 121, "employee_id": 129, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 121, "subordinates": []}, {"last_name": "123", "manager_id": 121, "employee_id": 130, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 121, "subordinates": []}, {"last_name": "123", "manager_id": 121, "employee_id": 131, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 121, "subordinates": []}, {"last_name": "123", "manager_id": 121, "employee_id": 132, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 121, "subordinates": []}, {"last_name": "123", "manager_id": 121, "employee_id": 184, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 121, "subordinates": []}, {"last_name": "123", "manager_id": 121, "employee_id": 185, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 121, "subordinates": []}, {"last_name": "123", "manager_id": 121, "employee_id": 186, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 121, "subordinates": []}, {"last_name": "123", "manager_id": 121, "employee_id": 187, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 122, "subordinates": []}, {"last_name": "123", "manager_id": 122, "employee_id": 133, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 122, "subordinates": []}, {"last_name": "123", "manager_id": 122, "employee_id": 134, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 122, "subordinates": []}, {"last_name": "123", "manager_id": 122, "employee_id": 135, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 122, "subordinates": []}, {"last_name": "123", "manager_id": 122, "employee_id": 136, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 122, "subordinates": []}, {"last_name": "123", "manager_id": 122, "employee_id": 188, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 122, "subordinates": []}, {"last_name": "123", "manager_id": 122, "employee_id": 189, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 122, "subordinates": []}, {"last_name": "123", "manager_id": 122, "employee_id": 190, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 122, "subordinates": []}, {"last_name": "123", "manager_id": 122, "employee_id": 191, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 123, "subordinates": []}, {"last_name": "123", "manager_id": 123, "employee_id": 137, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 123, "subordinates": []}, {"last_name": "123", "manager_id": 123, "employee_id": 138, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 123, "subordinates": []}, {"last_name": "123", "manager_id": 123, "employee_id": 139, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 123, "subordinates": []}, {"last_name": "123", "manager_id": 123, "employee_id": 140, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 123, "subordinates": []}, {"last_name": "123", "manager_id": 123, "employee_id": 192, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 123, "subordinates": []}, {"last_name": "123", "manager_id": 123, "employee_id": 193, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 123, "subordinates": []}, {"last_name": "123", "manager_id": 123, "employee_id": 194, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 123, "subordinates": []}, {"last_name": "123", "manager_id": 123, "employee_id": 195, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 124, "subordinates": []}, {"last_name": "123", "manager_id": 124, "employee_id": 141, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 124, "subordinates": []}, {"last_name": "123", "manager_id": 124, "employee_id": 142, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 124, "subordinates": []}, {"last_name": "123", "manager_id": 124, "employee_id": 143, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 124, "subordinates": []}, {"last_name": "123", "manager_id": 124, "employee_id": 144, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 124, "subordinates": []}, {"last_name": "123", "manager_id": 124, "employee_id": 196, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 124, "subordinates": []}, {"last_name": "123", "manager_id": 124, "employee_id": 197, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 124, "subordinates": []}, {"last_name": "123", "manager_id": 124, "employee_id": 198, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "123", "manager_id": 100, "employee_id": 124, "subordinates": []}, {"last_name": "123", "manager_id": 124, "employee_id": 199, "subordinates": []}]}                                                                                                |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Russell", "manager_id": 100, "employee_id": 145, "subordinates": []}, {"last_name": "Tucker", "manager_id": 145, "employee_id": 150, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Russell", "manager_id": 100, "employee_id": 145, "subordinates": []}, {"last_name": "Bernstein", "manager_id": 145, "employee_id": 151, "subordinates": []}]}                                                                                      |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Russell", "manager_id": 100, "employee_id": 145, "subordinates": []}, {"last_name": "Hall", "manager_id": 145, "employee_id": 152, "subordinates": []}]}                                                                                           |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Russell", "manager_id": 100, "employee_id": 145, "subordinates": []}, {"last_name": "Olsen", "manager_id": 145, "employee_id": 153, "subordinates": []}]}                                                                                          |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Russell", "manager_id": 100, "employee_id": 145, "subordinates": []}, {"last_name": "Cambrault", "manager_id": 145, "employee_id": 154, "subordinates": []}]}                                                                                      |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Russell", "manager_id": 100, "employee_id": 145, "subordinates": []}, {"last_name": "Tuvault", "manager_id": 145, "employee_id": 155, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Partners", "manager_id": 100, "employee_id": 146, "subordinates": []}, {"last_name": "King", "manager_id": 146, "employee_id": 156, "subordinates": []}]}                                                                                          |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Partners", "manager_id": 100, "employee_id": 146, "subordinates": []}, {"last_name": "Sully", "manager_id": 146, "employee_id": 157, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Partners", "manager_id": 100, "employee_id": 146, "subordinates": []}, {"last_name": "McEwen", "manager_id": 146, "employee_id": 158, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Partners", "manager_id": 100, "employee_id": 146, "subordinates": []}, {"last_name": "Smith", "manager_id": 146, "employee_id": 159, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Partners", "manager_id": 100, "employee_id": 146, "subordinates": []}, {"last_name": "Doran", "manager_id": 146, "employee_id": 160, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Partners", "manager_id": 100, "employee_id": 146, "subordinates": []}, {"last_name": "Sewall", "manager_id": 146, "employee_id": 161, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Errazuriz", "manager_id": 100, "employee_id": 147, "subordinates": []}, {"last_name": "Vishney", "manager_id": 147, "employee_id": 162, "subordinates": []}]}                                                                                      |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Errazuriz", "manager_id": 100, "employee_id": 147, "subordinates": []}, {"last_name": "Greene", "manager_id": 147, "employee_id": 163, "subordinates": []}]}                                                                                       |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Errazuriz", "manager_id": 100, "employee_id": 147, "subordinates": []}, {"last_name": "Marvins", "manager_id": 147, "employee_id": 164, "subordinates": []}]}                                                                                      |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Errazuriz", "manager_id": 100, "employee_id": 147, "subordinates": []}, {"last_name": "Lee", "manager_id": 147, "employee_id": 165, "subordinates": []}]}                                                                                          |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Errazuriz", "manager_id": 100, "employee_id": 147, "subordinates": []}, {"last_name": "Ande", "manager_id": 147, "employee_id": 166, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Errazuriz", "manager_id": 100, "employee_id": 147, "subordinates": []}, {"last_name": "Banda", "manager_id": 147, "employee_id": 167, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Cambrault", "manager_id": 100, "employee_id": 148, "subordinates": []}, {"last_name": "Ozer", "manager_id": 148, "employee_id": 168, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Cambrault", "manager_id": 100, "employee_id": 148, "subordinates": []}, {"last_name": "Bloom", "manager_id": 148, "employee_id": 169, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Cambrault", "manager_id": 100, "employee_id": 148, "subordinates": []}, {"last_name": "Fox", "manager_id": 148, "employee_id": 170, "subordinates": []}]}                                                                                          |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Cambrault", "manager_id": 100, "employee_id": 148, "subordinates": []}, {"last_name": "Smith", "manager_id": 148, "employee_id": 171, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Cambrault", "manager_id": 100, "employee_id": 148, "subordinates": []}, {"last_name": "Bates", "manager_id": 148, "employee_id": 172, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Cambrault", "manager_id": 100, "employee_id": 148, "subordinates": []}, {"last_name": "Kumar", "manager_id": 148, "employee_id": 173, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Zlotkey", "manager_id": 100, "employee_id": 149, "subordinates": []}, {"last_name": "Abel", "manager_id": 149, "employee_id": 174, "subordinates": []}]}                                                                                           |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Zlotkey", "manager_id": 100, "employee_id": 149, "subordinates": []}, {"last_name": "Hutton", "manager_id": 149, "employee_id": 175, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Zlotkey", "manager_id": 100, "employee_id": 149, "subordinates": []}, {"last_name": "Taylor", "manager_id": 149, "employee_id": 176, "subordinates": []}]}                                                                                         |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Zlotkey", "manager_id": 100, "employee_id": 149, "subordinates": []}, {"last_name": "Livingston", "manager_id": 149, "employee_id": 177, "subordinates": []}]}                                                                                     |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Zlotkey", "manager_id": 100, "employee_id": 149, "subordinates": []}, {"last_name": "Grant", "manager_id": 149, "employee_id": 178, "subordinates": []}]}                                                                                          |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Zlotkey", "manager_id": 100, "employee_id": 149, "subordinates": []}, {"last_name": "Johnson", "manager_id": 149, "employee_id": 179, "subordinates": []}]}                                                                                        |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Hartstein", "manager_id": 100, "employee_id": 201, "subordinates": []}, {"last_name": "Fay", "manager_id": 201, "employee_id": 202, "subordinates": []}]}                                                                                          |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Greenberg", "manager_id": 101, "employee_id": 108, "subordinates": []}, {"last_name": "Faviet", "manager_id": 108, "employee_id": 109, "subordinates": []}]}  |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Greenberg", "manager_id": 101, "employee_id": 108, "subordinates": []}, {"last_name": "Chen", "manager_id": 108, "employee_id": 110, "subordinates": []}]}    |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Greenberg", "manager_id": 101, "employee_id": 108, "subordinates": []}, {"last_name": "Sciarra", "manager_id": 108, "employee_id": 111, "subordinates": []}]} |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Greenberg", "manager_id": 101, "employee_id": 108, "subordinates": []}, {"last_name": "Urman", "manager_id": 108, "employee_id": 112, "subordinates": []}]}   |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Greenberg", "manager_id": 101, "employee_id": 108, "subordinates": []}, {"last_name": "Popp", "manager_id": 108, "employee_id": 113, "subordinates": []}]}    |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "Kochhar", "manager_id": 100, "employee_id": 101, "subordinates": []}, {"last_name": "Higgins", "manager_id": 101, "employee_id": 205, "subordinates": []}, {"last_name": "Gietz", "manager_id": 205, "employee_id": 206, "subordinates": []}]}     |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "De Haan", "manager_id": 100, "employee_id": 102, "subordinates": []}, {"last_name": "Hunold", "manager_id": 102, "employee_id": 103, "subordinates": []}, {"last_name": "Ernst", "manager_id": 103, "employee_id": 104, "subordinates": []}]}      |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "De Haan", "manager_id": 100, "employee_id": 102, "subordinates": []}, {"last_name": "Hunold", "manager_id": 102, "employee_id": 103, "subordinates": []}, {"last_name": "Austin", "manager_id": 103, "employee_id": 105, "subordinates": []}]}     |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "De Haan", "manager_id": 100, "employee_id": 102, "subordinates": []}, {"last_name": "Hunold", "manager_id": 102, "employee_id": 103, "subordinates": []}, {"last_name": "Pataballa", "manager_id": 103, "employee_id": 106, "subordinates": []}]}  |
+| {"last_name": "King", "manager_id": null, "employee_id": 100, "subordinates": [{"last_name": "De Haan", "manager_id": 100, "employee_id": 102, "subordinates": []}, {"last_name": "Hunold", "manager_id": 102, "employee_id": 103, "subordinates": []}, {"last_name": "Lorentz", "manager_id": 103, "employee_id": 107, "subordinates": []}]}    |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+```
+
+:::
