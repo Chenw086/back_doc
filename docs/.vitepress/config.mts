@@ -150,7 +150,8 @@ export default defineConfig({
 						{ text: '视图', link: '/mysql/base/view' },
 						{ text: '存储过程与函数', link: '/mysql/base/procedure' },
 						{ text: '变量、流程控制与游标', link: '/mysql/base/variable' },
-						{ text: '触发器', link: '/mysql/base/trigger' }
+						{ text: '触发器', link: '/mysql/base/trigger' },
+						{ text: 'JSON', link: '/mysql/base/json' }
 					]
 				}
 			],
