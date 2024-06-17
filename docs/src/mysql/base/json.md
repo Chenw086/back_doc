@@ -610,3 +610,528 @@ JSON_VALUE ：
 
 1. JSON_EXTRACT 适用于需要完整的 JSON 值（包括对象、数组等）的场景
 2. JSON_VALUE 适用于需要简单标量值的场景
+
+### JSON 数据修改
+
+**JSON_ARRAY_APPEND**
+
+用于向 JSON 数组末尾追加元素的函数。这个函数允许你在现有的 JSON 数组中添加新的元素，无论是标量值还是嵌套的 JSON 对象或数组。
+
+::: code-group
+
+```sql [语法]
+JSON_ARRAY_APPEND(json_doc, path, val[, path, val] ...)
+```
+
+```sql [示例 1]
+mysql> SELECT json_data FROM test_json WHERE id = 3;
++-------------------------------------------+
+| json_data                                 |
++-------------------------------------------+
+| {"fruits": ["apple", "banana", "cherry"]} |
++-------------------------------------------+
+1 row in set (0.00 sec)
+
+mysql> UPDATE test_json
+    -> SET json_data = JSON_ARRAY_APPEND(json_data, '$.fruits', 'cherry')
+    -> WHERE id = 3;
+Query OK, 1 row affected (0.02 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 3;
++-----------------------------------------------------+
+| json_data                                           |
++-----------------------------------------------------+
+| {"fruits": ["apple", "banana", "cherry", "cherry"]} |
++-----------------------------------------------------+
+1 row in set (0.00 sec)
+```
+
+:::
+
+如果 path 所指的对象不是一个数组，那么在进行追加操作之前，mysql 会将该对象转换为一个只有一个元素的新数组
+
+```sql
+mysql> SELECT json_data FROM test_json WHERE id = 5;
++--------------------------------------------------------------+
+| json_data                                                    |
++--------------------------------------------------------------+
+| {"fruits": ["apple", "banana", "cherry"], "hobbies": "Java"} |
++--------------------------------------------------------------+
+1 row in set (0.01 sec)
+
+mysql> UPDATE test_json
+    -> SET json_data = JSON_ARRAY_APPEND(json_data, '$.hobbies', 'Python')
+    -> WHERE id = 5;
+Query OK, 1 row affected (0.01 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 5;
++--------------------------------------------------------------------------+
+| json_data                                                                |
++--------------------------------------------------------------------------+
+| {"fruits": ["apple", "banana", "cherry"], "hobbies": ["Java", "Python"]} |
++--------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+```
+
+`此函数适用于需要动态修改和扩展数据库内存储JSON数组的情况，特别是在处理具有可变长度列表的数据时特别有用`
+
+**JSON_ARRAY_INSERT**
+
+用于向 JSON 数组的特定位置插入元素的函数。这个函数允许你在现有的 JSON 数组的指定索引处插入一个新元素，这个元素可以是单个元素值、JSON 数组、JSON 对象
+
+::: code-group
+
+```sql [语法]
+JSON_ARRAY_INSERT(json_doc, path, val[, path, val] ...)
+```
+
+```sql [示例 1]
+mysql> SELECT json_data FROM test_json WHERE id = 6;
++----------------------------------------------------+
+| json_data                                          |
++----------------------------------------------------+
+| {"fruits": ["apple", "banana"], "hobbies": "Java"} |
++----------------------------------------------------+
+1 row in set (0.00 sec)
+
+mysql> UPDATE test_json
+    -> SET json_data = JSON_ARRAY_INSERT(json_data, '$.fruits[0]', 'cherry')
+    -> WHERE id = 6;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 6;
++--------------------------------------------------------------+
+| json_data                                                    |
++--------------------------------------------------------------+
+| {"fruits": ["cherry", "apple", "banana"], "hobbies": "Java"} |
++--------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+```
+
+```sql [插入一个数组]
+mysql> UPDATE test_json
+    -> SET json_data = JSON_ARRAY_INSERT(json_data, '$.fruits[0]', CAST('["cherry", "orange"]' AS JSON))
+    -> WHERE id = 7;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 7;
++--------------------------------------------------------------------------+
+| json_data                                                                |
++--------------------------------------------------------------------------+
+| {"fruits": [["cherry", "orange"], "apple", "banana"], "hobbies": "Java"} |
++--------------------------------------------------------------------------+
+
+1 row in set (0.00 sec)
+```
+
+:::
+
+**JSON_INSERT**
+用于向 JSON 文档插入新键值对或替换已存在键对应值的一个函数
+
+如果在 JSON 文档中，路径已存在，则不会覆盖现有的文档值
+
+如果指定的路径不存在于原始 JSON 文档中，则会在该路径处创建新的键值对
+
+::: code-group
+
+```sql [语法]
+JSON_INSERT(json_doc, path, val[, path, val] ...)
+```
+
+```sql [已存在]
+mysql> SELECT json_data FROM test_json WHERE id = 8;
++----------------------------------------------------+
+| json_data                                          |
++----------------------------------------------------+
+| {"fruits": ["apple", "banana"], "hobbies": "Java"} |
++----------------------------------------------------+
+1 row in set (0.00 sec)
+
+mysql> UPDATE test_json
+    -> SET json_data = JSON_INSERT(json_data, '$.hobbies', 'Python')
+    -> WHERE id = 8;
+Query OK, 0 rows affected (0.00 sec)
+Rows matched: 1  Changed: 0  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 8;
++----------------------------------------------------+
+| json_data                                          |
++----------------------------------------------------+
+| {"fruits": ["apple", "banana"], "hobbies": "Java"} |
++----------------------------------------------------+
+1 row in set (0.00 sec)
+
+```
+
+```sql [已存在]
+mysql> SELECT json_data FROM test_json WHERE id = 9;
++---------------------------------+
+| json_data                       |
++---------------------------------+
+| {"fruits": ["apple", "banana"]} |
++---------------------------------+
+1 row in set (0.00 sec)
+
+mysql> UPDATE test_json
+    -> SET json_data = JSON_INSERT(json_data, '$.hobbies', CAST('["Java", "Python"]' AS JSON),
+    ->     '$.name', 'CoderAcademy',
+    ->     '$.address', cast('{"city": "New York", "street": "123 Main St"}' AS JSON))
+    -> WHERE id = 9;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 9;
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+| json_data                                                                                                                                        |
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+| {"name": "CoderAcademy", "fruits": ["apple", "banana"], "address": {"city": "New York", "street": "123 Main St"}, "hobbies": ["Java", "Python"]} |
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+```
+
+:::
+
+**JSON_REMOVE**
+
+用于从 JSON 文档中删除数据
+
+::: code-group
+
+```sql [语法]
+JSON_REMOVE(json_doc, path[, path] ...)
+
+```
+
+```sql [删除对应键值]
+mysql> SELECT json_data FROM test_json WHERE id = 10;
++----------------------------------------------------+
+| json_data                                          |
++----------------------------------------------------+
+| {"fruits": ["apple", "banana"], "hobbies": "Java"} |
++----------------------------------------------------+
+1 row in set (0.00 sec)
+
+mysql> UPDATE test_json
+    -> SET json_data = JSON_REMOVE(json_data, '$.hobbies')
+    -> WHERE id = 10;
+Query OK, 1 row affected (0.01 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 10;
++---------------------------------+
+| json_data                       |
++---------------------------------+
+| {"fruits": ["apple", "banana"]} |
++---------------------------------+
+1 row in set (0.00 sec)
+
+```
+
+```sql [删除数组指定索引位]
+mysql> UPDATE test_json
+    -> SET json_data = JSON_REMOVE(json_data, '$.fruits[1]')
+    -> WHERE id = 10;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 10;
++-----------------------+
+| json_data             |
++-----------------------+
+| {"fruits": ["apple"]} |
++-----------------------+
+1 row in set (0.00 sec)
+
+```
+
+```sql [删除置顶位置没值]
+mysql> UPDATE test_json
+    -> SET json_data = JSON_REMOVE(json_data, '$.fruits[1]')
+    -> WHERE id = 10;
+Query OK, 0 rows affected (0.00 sec)
+Rows matched: 1  Changed: 0  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 10;
++-----------------------+
+| json_data             |
++-----------------------+
+| {"fruits": ["apple"]} |
++-----------------------+
+1 row in set (0.00 sec)
+
+```
+
+:::
+
+**JSON_REPLACE**
+
+函数用于替换 JSON 文档中的现有值
+
+如果替换路径在文档中存在，则就用新值覆盖文档中原值，否则不会替换，也不会报错
+
+::: code-group
+
+```sql [语法]
+JSON_REPLACE(json_doc, path, val[, path, val] ...)
+```
+
+```sql [如果没有置顶位置]
+mysql> SELECT json_data FROM test_json WHERE id = 11;
++----------------------------------------------------+
+| json_data                                          |
++----------------------------------------------------+
+| {"fruits": ["apple", "banana"], "hobbies": "Java"} |
++----------------------------------------------------+
+1 row in set (0.01 sec)
+
+mysql> UPDATE test_json
+    -> SET json_data = JSON_REPLACE(json_data, '$.name', 'CoderAcademy')
+    -> WHERE id = 11;
+Query OK, 0 rows affected (0.00 sec)
+Rows matched: 1  Changed: 0  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 11;
++----------------------------------------------------+
+| json_data                                          |
++----------------------------------------------------+
+| {"fruits": ["apple", "banana"], "hobbies": "Java"} |
++----------------------------------------------------+
+1 row in set (0.00 sec)
+
+```
+
+```sql [如果有指定位置]
+mysql> UPDATE test_json
+    -> SET json_data = JSON_REPLACE(json_data, '$.fruits[1]', 'orange', '$.hobbies',  CAST('["Java", "Python"]' AS JSON))
+    -> WHERE id = 11;
+Query OK, 1 row affected (0.01 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 11;
++----------------------------------------------------------------+
+| json_data                                                      |
++----------------------------------------------------------------+
+| {"fruits": ["apple", "orange"], "hobbies": ["Java", "Python"]} |
++----------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+```
+
+:::
+
+**JSON_SET**
+
+用于在 JSON 文档中插入或更新数据
+
+如果路径在文档中已存在，则会覆盖原文档中值，如果不存在，则插入新值
+
+::: code-group
+
+```sql [语法]
+JSON_SET(json_doc, path, val[, path, val] ...)
+```
+
+```sql [示例]
+mysql> SELECT json_data FROM test_json WHERE id = 12;
++----------------------------------------------------+
+| json_data                                          |
++----------------------------------------------------+
+| {"fruits": ["apple", "banana"], "hobbies": "Java"} |
++----------------------------------------------------+
+1 row in set (0.00 sec)
+
+mysql> UPDATE test_json
+    -> SET json_data = JSON_SET(json_data, '$.fruits[1]', 'orange',
+    ->     '$.hobbies', CAST('["Java", "Python"]' AS JSON),
+    ->     '$.name', 'CoderAcademy',
+    ->     '$.address', cast('{"city": "New York", "street": "123 Main St"}' AS JSON))
+    -> WHERE id = 12;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> SELECT json_data FROM test_json WHERE id = 12;
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+| json_data                                                                                                                                        |
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+| {"name": "CoderAcademy", "fruits": ["apple", "orange"], "address": {"city": "New York", "street": "123 Main St"}, "hobbies": ["Java", "Python"]} |
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+```
+
+:::
+
+## 索引
+
+### 路径索引
+
+MySQL 8.0 引入了 JSON 路径索引，允许在 JSON 对象的特定路径上创建索引，以便更高效地执行 JSON 路径查询
+
+路径索引允许在 JSON 对象中的特定路径上进行范围查询、排序和过滤。我们以查询地址信息中 country 等于"US"为例
+
+::: code-group
+
+```sql [JSON_CONTAINS]
+SELECT * FROM user_info WHERE JSON_CONTAINS(address, '"US"', '$.country');
+```
+
+```sql [JSON_VALUE]
+SELECT * FROM user_info WHERE JSON_VALUE(address, '$.country') = "US";
+```
+
+```sql [JSON_EXTRACT]
+SELECT * FROM user_info WHERE JSON_EXTRACT(address, '$.country') = 'US';
+```
+
+```sql [->>]
+SELECT * FROM user_info WHERE address->>"$.country" = "US";
+
+-- 或者
+
+SELECT * FROM user_info WHERE CAST(address->>"$.country" AS CHAR(30)) = "US";
+
+```
+
+:::
+
+在 JSON 类型字段上创建索引时，要遵守的规则是要确保索引表达式与查询时的条件表达式匹配，这样 MySQL 才能正确地使用索引进行优化查询
+
+所以针对不同的 sql 查询，提供不同的索引
+
+- 使用 JSON_EXTRACT
+  我们可以采取新增一个虚拟列的方式去使用索引，比如我们新增一个 country 的虚拟列，然后在虚拟列上增加索引
+
+::: code-group
+
+```sql [添加索引]
+-- 添加生成的虚拟列  
+ALTER TABLE user_info  
+ADD COLUMN country VARCHAR(255) GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(address, '$.country'))) STORED;  
+
+-- 在生成的列上创建索引  
+CREATE INDEX idx_json_country ON user_info(country);
+
+```
+
+```sql [查看执行计划]
+mysql> EXPLAIN SELECT * FROM user_info WHERE country = 'US';
++----+-------------+-----------+------------+------+------------------+------------------+---------+-------+------+----------+-------+
+| id | select_type | table     | partitions | type | possible_keys    | key              | key_len | ref   | rows | filtered | Extra |
++----+-------------+-----------+------------+------+------------------+------------------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | user_info | NULL       | ref  | idx_json_country | idx_json_country | 1023    | const |    2 |   100.00 | NULL  |
++----+-------------+-----------+------------+------+------------------+------------------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.01 sec)
+
+```
+
+:::
+
+可以看出使用了索引： idx_json_country
+
+- 使用 ->> 运算符
+
+使用 ->> 运算符：在 MySQL 中，->> 是一个用于从 JSON 值中提取数据的运算符。它等同于 JSON_UNQUOTE(JSON_EXTRACT(...))。这意味着它会从 JSON 对象中提取一个值，并去除该值的引号，使其成为一个普通的字符串或数值
+
+转换为 JSON_UNQUOTE(JSON_EXTRACT(...))：当你使用 ->> 运算符时，MySQL 内部实际上是将这个操作转换为 JSON_UNQUOTE(JSON_EXTRACT(...))。这是因为 ->> 本质上是提取 JSON 值并去引号的过程
+
+JSON_UNQUOTE() 返回的值具有 LONGTEXT 数据类型：JSON_UNQUOTE() 函数提取出来的值会被视为 LONGTEXT 类型的数据。LONGTEXT 是 MySQL 中的一种文本数据类型，它可以存储大量的文本数据
+
+MySQL 不能对没有键部分上的前缀长度指定的 LONGTEXT 列建立索引：这是 MySQL 的一个限制。由于 LONGTEXT 列可以存储非常大的数据，MySQL 不允许在没有指定键部分的前缀长度的情况下为这种类型的列创建索引。前缀长度是指只为列的一部分内容创建索引，而不是整个列的内容
+
+在功能性键部分中又不允许指定前缀长度：这意味着当你尝试使用函数（如 JSON_UNQUOTE(JSON_EXTRACT(...))）作为索引的一部分时，你不能在这个函数内部指定前缀长度。这限制了为 JSON 列创建有效索引的能力
+
+但是可以这样创建
+
+```sql
+CREATE INDEX idx_json_country_cast ON user_info((CAST(address->>"$.country" AS CHAR(30)) COLLATE utf8mb4_bin));
+
+```
+
+操作详解：
+
+1. CREATE INDEX idx_json_country_cast: 这部分是创建索引的基本语法，idx_json_country_cast 是索引的名称
+2. ON user_info: 这指定了索引将被创建在哪个表上，这里是 user_info 表
+3. (CAST(address->>"$.country" AS CHAR(30)) COLLATE utf8mb4_bin): 这是索引的键定义部分，它告诉 MySQL 如何从表中提取数据以用于索引
+   - address->>"$.country": 使用->>运算符从address列（假设它是一个JSON类型的列）中提取country字段的值。这个操作相当于JSON_UNQUOTE(JSON_EXTRACT(address, '$.country'))
+   - CAST(... AS CHAR(30)): 使用 CAST 函数将提取出的 country 字段的值转换为 CHAR(30)类型，即最多 30 个字符的定长字符串。这样做是为了限制索引的大小，因为 country 字段的实际大小可能是可变的
+   - COLLATE utf8mb4_bin: 这指定了字符串的排序规则（collation），utf8mb4_bin 是一种区分大小写和特殊字符的排序规则。这对于确保索引的正确性和一致性是很重要的
+
+### 多值索引
+
+多值索引是 MySQL 8.0.17 版本引入的新功能，它允许在 InnoDB 存储引擎中创建索引来支持对存储数组值的列进行高效查询。传统的索引是一对一的，而多值索引允许在一个数据记录上拥有多个索引记录。多值索引主要用于索引 JSON 数组
+
+要创建多值索引，可以在 CREATE TABLE、ALTER TABLE 或 CREATE INDEX 语句中使用 CAST(… AS … ARRAY) 函数来定义。
+
+这将把 JSON 数组中的同类型标量值转换为 SQL 数据类型数组。然后，MySQL 会在这个 SQL 数据类型数组上创建一个虚拟列，并在虚拟列上创建一个功能性索引。最终，这个功能性索引构成了多值索引
+
+在 address 中增加一个 zipcode 列用于存储地址邮编，每个地址包含若干个邮编。我们对这个 zipcode 就可以使用多值索引
+
+::: code-group
+
+```sql [创建]
+mysql> ALTER TABLE user_info ADD INDEX idx_json_zipcode((CAST(address->'$.zipcode' AS SIGNED ARRAY)));
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+```
+
+```sql [验证]
+mysql> SELECT * FROM user_info WHERE 94507 MEMBER OF(address->'$.zipcode');
++----+-----------+--------------------------------------------------------------------------------------------------+---------------------+
+| id | user_name | address                                                                                          | create_time         |
++----+-----------+--------------------------------------------------------------------------------------------------+---------------------+
+|  2 | lisi      | {"city": "shanghai", "street": "123 Main St", "country": "CN", "zipcode": [94568, 94507, 94582]} | 2024-02-05 11:08:22 |
+|  3 | wangwu    | {"city": "guangzhou", "street": "123 Main St", "country": "CN", "zipcode": [94477, 94507]}       | 2024-02-05 11:08:22 |
+|  4 | qianliu   | {"city": "New York", "street": "123 Main St", "country": "US", "zipcode": [94507, 94582]}        | 2024-02-05 11:08:22 |
++----+-----------+--------------------------------------------------------------------------------------------------+---------------------+
+3 rows in set (0.01 sec)
+
+mysql> EXPLAIN
+    -> SELECT * FROM user_info WHERE 94507 MEMBER OF(address->'$.zipcode');
++----+-------------+-----------+------------+------+------------------+------------------+---------+-------+------+----------+-------------+
+| id | select_type | table     | partitions | type | possible_keys    | key              | key_len | ref   | rows | filtered | Extra       |
++----+-------------+-----------+------------+------+------------------+------------------+---------+-------+------+----------+-------------+
+|  1 | SIMPLE      | user_info | NULL       | ref  | idx_json_zipcode | idx_json_zipcode | 9       | const |    3 |   100.00 | Using where |
++----+-------------+-----------+------------+------+------------------+------------------+---------+-------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+
+```
+
+:::
+
+多值索引还可以作为复合索引的一部分进行定义。在复合索引中，只能有一个多值键部分，并且可以与其他单值部分一起使用。多值键部分可以按任意顺序使用
+
+```sql
+mysql> ALTER TABLE user_info ADD INDEX idx_name_zipcode(user_name, (CAST(address->'$.zipcode' AS SIGNED ARRAY)));
+Query OK, 0 rows affected (0.04 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+```
+
+## 解惑
+
+### -> 与 ->>
+
+**-> 运算符**
+
+当你使用 -> 运算符时，它会返回 JSON 格式的值。这意味着如果你从一个 JSON 对象中提取一个属性，你将得到一个 JSON 字符串，即使这个属性的值本身不是一个字符串
+
+例如，如果你有一个 JSON 对象 {"name": "John"}，使用 -> 运算符提取 name 属性将返回 "John"（包括双引号），这是一个 JSON 字符串
+
+语法示例：json_column -> '$.key'
+
+**->> 运算符**
+
+当你使用 ->> 运算符时，它会返回非 JSON 格式的值，也就是说，它会移除值的引号，将 JSON 字符串转换为普通字符串或相应的数据类型（如数字）
+
+继续上面的例子，使用 ->> 运算符提取 name 属性将返回 John（不包括双引号），这是一个普通字符串
+
+语法示例：json_column ->> '$.key'
