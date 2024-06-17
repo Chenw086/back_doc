@@ -1830,3 +1830,77 @@ FROM goods WINDOW w AS (PARTITION BY category_id ORDER BY price);
 ```
 
 :::
+
+## 数据转换
+
+### CAST
+
+用于将数据从一种数据类型转换为另一种数据类型，这在处理数据时非常有用，尤其是在需要确保数据以特定格式或类型参与计算或比较时
+
+::: danger 注意
+转换时可能会丢失信息，例如将浮点数转换为整数时，小数部分会被丢弃
+
+不是所有的数据类型转换都是有效的，例如不能直接将字符串转换为日期类型，除非字符串符合日期格式
+
+在某些情况下，MySQL 可能无法隐式地转换数据类型，这时使用 CAST()函数可以显式地进行转换
+
+:::
+
+::: code-group
+
+```sql [语法]
+CAST(expr AS type)
+```
+
+```sql [整数]
+SELECT CAST('123' AS SIGNED); -- 结果是整数123
+```
+
+```sql [浮点转整数]
+SELECT CAST(123.45 AS SIGNED); -- 结果是整数123，小数部分被截断
+```
+
+```sql [日期时间转日期]
+SELECT CAST('2023-04-01 12:00:00' AS DATE); -- 结果是日期'2023-04-01'
+```
+
+```sql [字符串转二进制]
+SELECT CAST('Hello' AS BINARY); -- 结果是二进制表示的字符串
+```
+
+```sql [json 转字符串]
+SELECT CAST('{"name": "John"}' AS CHAR); -- 结果是字符串'{"name": "John"}'
+```
+
+```sql [JSON 中使用]
+SELECT CAST(JSON_EXTRACT(json_data, '$.price') AS DECIMAL(10, 2)) FROM products;
+```
+
+:::
+
+- 示例：处理 JSON 数据中的数值
+
+::: code-group
+
+```sql [建表]
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_data JSON
+);
+
+INSERT INTO products (product_data) VALUES
+    ('{"name": "Widget", "price": "99.99"}'),
+    ('{"name": "Gadget", "price": "149.99"}');
+```
+
+```sql [使用 JSON_EXTRACT]
+SELECT * FROM products
+ORDER BY CAST(JSON_EXTRACT(product_data, '$.price') AS DECIMAL(10, 2));
+```
+
+```sql [->>]
+SELECT * FROM products
+ORDER BY CAST(product_data->>'$.price' AS DECIMAL(10, 2));
+```
+
+:::
