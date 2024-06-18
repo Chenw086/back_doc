@@ -6,6 +6,8 @@ title: 开始
 
 ::: danger 相关链接
 😛 [redis 中文网](https://www.redis.net.cn/)
+
+😎 [linux 盘符区分](https://blog.csdn.net/qq_35781732/article/details/83795737)
 :::
 
 ## 环境配置
@@ -30,8 +32,38 @@ brew services start redis@6.2
 brew services info redis@6.2
 ```
 
+```bash [查看安装地址]
+[chenwei@VIVIICHEN-MC0 bin (stable)]$ which redis-server
+/opt/homebrew/Cellar/redis@6.2/6.2.14/bin/redis-server
+
+# 或者
+
+[chenwei@VIVIICHEN-MC0 bin (stable)]$ brew info redis
+==> redis: stable 7.2.5 (bottled), HEAD
+Persistent key-value database, with built-in net interface
+https://redis.io/
+Not installed
+From: https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/r/redis.rb
+License: BSD-3-Clause
+==> Dependencies
+Required: openssl@3 ✔
+==> Options
+--HEAD
+        Install HEAD version
+==> Caveats
+To start redis now and restart at login:
+  brew services start redis
+Or, if you don't want/need a background service you can just run:
+  /opt/homebrew/opt/redis/bin/redis-server /opt/homebrew/etc/redis.conf
+==> Analytics
+install: 31,776 (30 days), 73,310 (90 days), 354,880 (365 days)
+install-on-request: 31,349 (30 days), 72,250 (90 days), 349,698 (365 days)
+build-error: 23 (30 days)
+
+```
+
 ```bash [环境变量]
-echo 'export PATH="/usr/local/Cellar/redis@6.2/6.2.14/bin:$PATH"' >> ~/.zshrc
+echo 'export PATH="/opt/homebrew/Cellar/redis@6.2/6.2.14:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -42,6 +74,8 @@ redis-cli info server
 :::
 
 另外还要配置系统服务与环境变量
+
+**linux 安装**
 
 ## 基础介绍
 

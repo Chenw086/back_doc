@@ -208,6 +208,16 @@ export default defineConfig({
 				{
 					text: '开始',
 					link: '/redis/'
+				},
+				{
+					text: '基础',
+					collapsed: true,
+					items: [
+						{
+							text: '配置相关',
+							link: '/redis/base/state'
+						}
+					]
 				}
 			]
 		},
