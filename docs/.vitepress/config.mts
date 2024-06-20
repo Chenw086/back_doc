@@ -216,6 +216,10 @@ export default defineConfig({
 						{
 							text: '配置相关',
 							link: '/redis/base/state'
+						},
+						{
+							text: '数据类型',
+							link: '/redis/base/type'
 						}
 					]
 				}
