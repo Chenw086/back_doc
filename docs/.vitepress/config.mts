@@ -220,6 +220,22 @@ export default defineConfig({
 						{
 							text: '数据类型',
 							link: '/redis/base/type'
+						},
+						{
+							text: '命令',
+							link: '/redis/base/command'
+						},
+						{
+							text: '参数',
+							link: '/redis/base/option'
+						},
+						{
+							text: '事务',
+							link: '/redis/base/transaction'
+						},
+						{
+							text: '持久化',
+							link: '/redis/base/persistence'
 						}
 					]
 				}
