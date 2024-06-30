@@ -18,5 +18,5 @@ koa 优秀内容合集： [awesome koa](https://github.com/ellerbrock/awesome-ko
 关于路由：
 
 - 路由合集：[路由合集](https://github.com/koajs?q=route&type=all&language=&sort=)
-- 最终选择：[@koa/router](https://github.com/koajs/router)
+- 最终选择：[@koa/router](https://github.com/koajs/router/blob/master/API.md)
   :::
