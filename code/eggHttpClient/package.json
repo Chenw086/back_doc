@@ -1,5 +1,5 @@
 {
-	"name": "渐进式开发_抽成独立插件",
+	"name": "egg_http_client",
 	"version": "1.0.0",
 	"main": "index.js",
 	"scripts": {
@@ -14,13 +14,9 @@
 	"dependencies": {
 		"egg": "^3.25.0",
 		"egg-bin": "^6.10.0",
-		"egg-view-nunjucks": "^2.3.0",
-		"example-framework": "file:../example-framework"
+		"egg-view-nunjucks": "^2.3.0"
 	},
 	"devDependencies": {
 		"egg-mock": "^5.12.0"
-	},
-	"egg": {
-		"framework": "example-framework"
 	}
 }
