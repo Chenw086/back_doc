@@ -7,4 +7,6 @@ module.exports = (app) => {
 	controllerRouter.post('/body/list_post', controller.docsController.body.listPosts)
 	controllerRouter.post('/file', controller.docsController.file.upload)
 	controllerRouter.post('/file/stream', controller.docsController.file.stream)
+	controllerRouter.post('/validate', controller.docsController.validate.index)
+	controllerRouter.get('/download', controller.docsController.download.index)
 }
