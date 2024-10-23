@@ -1,7 +1,4 @@
 import { defineConfig } from 'vitepress'
-import path from 'path'
-
-// console.log(1111, __dirname, path.resolve(__dirname, './src'))
 
 export default defineConfig({
 	title: '后台笔记',

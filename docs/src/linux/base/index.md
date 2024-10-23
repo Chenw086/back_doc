@@ -8,6 +8,8 @@ title: linux - 安装
 
 ## 安装新虚拟机
 
+### window
+
 [官网地址：](https://www.vmware.com/cn.html)
 
 ::: details 陈伟资源所处位置
@@ -63,7 +65,7 @@ title: linux - 安装
    - 完成
      ![16](../img/index/base_index_16.png)
 
-## 安装 centos
+#### 安装 centos
 
 **确认电脑是否支持 vt-x**
 
@@ -177,7 +179,7 @@ title: linux - 安装
 
     ![ins_27](../img/index/base_index_install_27.png)
 
-## 桌面与终端
+#### 桌面与终端
 
 **进入终端**
 
@@ -204,3 +206,13 @@ title: linux - 安装
 > 不想要的文件永久删除：shift + del
 
 ![cus_03](../img/index/base_index_cus_03.png)
+
+### mac
+
+::: warning 来源：
+
+[安装：](https://blog.csdn.net/2301_77498991/article/details/130536237)
+
+[yum 源问题解决：](https://wu55555.blog.csdn.net/article/details/128175716)
+
+:::
