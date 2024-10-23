@@ -2,6 +2,12 @@
 title: linux - 网络配置
 ---
 
+::: warning 提示
+此部分为 window 配置
+
+mac 配置在 《安装》 部分链接内有讲
+:::
+
 # 网络配置
 
 ## 本机与虚拟机通信
@@ -123,7 +129,7 @@ vmnet8 是 pc 虚拟出的网关，为了和 linux 处统一网络环境
 
 ## 配置主机名
 
-**修改配置文件的方式修改**
+**修改配置文件的方式修改（永久修改）**
 
 查看当前主机的 hostname 进入配置页
 
@@ -133,7 +139,7 @@ vmnet8 是 pc 虚拟出的网关，为了和 linux 处统一网络环境
 
 ![net_22](../img/network/net_22.png)
 
-**通过终端修改**
+**通过终端修改（临时修改）**
 
 ```bash
 hostnamectl set-hostname linux_review
@@ -164,3 +170,9 @@ hostnamectl set-hostname linux_review
 测试：
 
 ![net_25](../img/network/net_25.png)
+
+- 重启服务
+
+```shell
+systemctl restart systemd - hostname - set
+```

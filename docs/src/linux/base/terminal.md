@@ -2,6 +2,12 @@
 title: linux - 远程登录
 ---
 
+::: warning 提示
+此部分为 window 配置
+
+mac 配置在 terminus 里面有配置
+:::
+
 # 远程登录
 
 ## 终端登录

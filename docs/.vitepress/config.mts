@@ -113,7 +113,9 @@ export default defineConfig({
 						{ text: '网络配置', link: '/linux/base/network' },
 						{ text: '远程登录', link: '/linux/base/terminal' },
 						{ text: '虚拟机克隆', link: '/linux/base/clone' },
-						{ text: '系统管理', link: '/linux/base/manager' }
+						{ text: '系统管理', link: '/linux/base/manager' },
+						{ text: '帮助命令', link: '/linux/base/help' },
+						{ text: '常用指令', link: '/linux/base/command' }
 					]
 				},
 				{
