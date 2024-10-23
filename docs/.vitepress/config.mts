@@ -115,7 +115,9 @@ export default defineConfig({
 						{ text: '虚拟机克隆', link: '/linux/base/clone' },
 						{ text: '系统管理', link: '/linux/base/manager' },
 						{ text: '帮助命令', link: '/linux/base/help' },
-						{ text: '常用指令', link: '/linux/base/command' }
+						{ text: '常用指令', link: '/linux/base/command' },
+						{ text: '日期时间', link: '/linux/base/date' },
+						{ text: '用户管理', link: '/linux/base/user' }
 					]
 				},
 				{
