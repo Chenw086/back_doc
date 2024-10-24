@@ -122,7 +122,8 @@ export default defineConfig({
 						{ text: '文件权限', link: '/linux/base/permission' },
 						{ text: '搜索查找', link: '/linux/base/search' },
 						{ text: '解压缩', link: '/linux/base/compress' },
-						{ text: '进程管理', link: '/linux/base/process' }
+						{ text: '进程管理', link: '/linux/base/process' },
+						{ text: '定时任务', link: '/linux/base/scheduled' }
 					]
 				},
 				{
