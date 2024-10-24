@@ -17,7 +17,7 @@ export default defineConfig({
 			infoLabel: '信息',
 			detailsLabel: '详细信息'
 		},
-		lineNumbers: true, // 行号
+		lineNumbers: false, // 行号
 		image: {
 			// 默认禁用图片懒加载
 			lazyLoading: true
@@ -119,7 +119,8 @@ export default defineConfig({
 						{ text: '日期时间', link: '/linux/base/date' },
 						{ text: '用户管理', link: '/linux/base/user' },
 						{ text: '用户组管理', link: '/linux/base/group' },
-						{ text: '文件权限', link: '/linux/base/permission' }
+						{ text: '文件权限', link: '/linux/base/permission' },
+						{ text: '搜索查找', link: '/linux/base/search' }
 					]
 				},
 				{
