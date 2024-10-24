@@ -117,7 +117,9 @@ export default defineConfig({
 						{ text: '帮助命令', link: '/linux/base/help' },
 						{ text: '常用指令', link: '/linux/base/command' },
 						{ text: '日期时间', link: '/linux/base/date' },
-						{ text: '用户管理', link: '/linux/base/user' }
+						{ text: '用户管理', link: '/linux/base/user' },
+						{ text: '用户组管理', link: '/linux/base/group' },
+						{ text: '文件权限', link: '/linux/base/permission' }
 					]
 				},
 				{
