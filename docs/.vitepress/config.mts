@@ -120,7 +120,9 @@ export default defineConfig({
 						{ text: '用户管理', link: '/linux/base/user' },
 						{ text: '用户组管理', link: '/linux/base/group' },
 						{ text: '文件权限', link: '/linux/base/permission' },
-						{ text: '搜索查找', link: '/linux/base/search' }
+						{ text: '搜索查找', link: '/linux/base/search' },
+						{ text: '解压缩', link: '/linux/base/compress' },
+						{ text: '进程管理', link: '/linux/base/process' }
 					]
 				},
 				{
