@@ -127,6 +127,11 @@ export default defineConfig({
 					]
 				},
 				{
+					text: '包管理',
+					collapsed: true,
+					items: [{ text: 'rpm', link: '/linux/package/rpm' }]
+				},
+				{
 					text: '场景与问题',
 					collapsed: true,
 					items: [{ text: '开始', link: '/linux/problem/' }]
