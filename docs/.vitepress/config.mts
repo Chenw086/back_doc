@@ -131,7 +131,8 @@ export default defineConfig({
 					collapsed: true,
 					items: [
 						{ text: 'rpm', link: '/linux/package/rpm' },
-						{ text: 'yum', link: '/linux/package/yum' }
+						{ text: 'yum', link: '/linux/package/yum' },
+						{ text: 'source', link: '/linux/package/source' }
 					]
 				},
 				{
