@@ -129,7 +129,10 @@ export default defineConfig({
 				{
 					text: '包管理',
 					collapsed: true,
-					items: [{ text: 'rpm', link: '/linux/package/rpm' }]
+					items: [
+						{ text: 'rpm', link: '/linux/package/rpm' },
+						{ text: 'yum', link: '/linux/package/yum' }
+					]
 				},
 				{
 					text: '场景与问题',
