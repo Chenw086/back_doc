@@ -132,7 +132,16 @@ export default defineConfig({
 					items: [
 						{ text: 'rpm', link: '/linux/package/rpm' },
 						{ text: 'yum', link: '/linux/package/yum' },
-						{ text: 'source', link: '/linux/package/source' }
+						{ text: 'source', link: '/linux/package/source' },
+						{ text: 'brew', link: '/linux/package/brew' },
+					]
+				},
+				{
+					text: '下载请求',
+					collapsed: true,
+					items: [
+						{ text: 'wget', link: '/linux/request/wget' },
+						{ text: 'curl', link: '/linux/request/curl' },
 					]
 				},
 				{

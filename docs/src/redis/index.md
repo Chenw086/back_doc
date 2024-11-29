@@ -8,6 +8,9 @@ title: 开始
 😛 [redis 中文网](https://www.redis.net.cn/)
 
 😎 [linux 盘符区分](https://blog.csdn.net/qq_35781732/article/details/83795737)
+
+[守护进程启动](https://blog.csdn.net/adley_app/article/details/82831948)
+
 :::
 
 ## 规范
@@ -30,6 +33,7 @@ brew install redis@6.2
 
 ```bash [启动]
 brew services start redis@6.2
+
 ```
 
 ```BASH [检查]
