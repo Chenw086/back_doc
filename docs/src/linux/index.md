@@ -11,3 +11,5 @@ title: linux - 说明
 📀 [阿里云的 centOS](https://mirrors.aliyun.com/centos/?spm=a2c6h.13651104.0.0.1bd012b2ZmVPGj)
 
 😪 [官方地址](https://www.centos.org/)
+
+🥰 [linux 大全](https://wangchujiang.com/linux-command/)

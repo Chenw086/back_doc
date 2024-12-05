@@ -22,7 +22,7 @@ ssh 连接虚拟主机，然后 exit 退出
 
 ![ter_02](../img/terminal/ter_02.png)
 
-设置用户：root w19950806.
+设置用户：root w19*****06.
 
 ![ter_03](../img/terminal/ter_03.png)
 

@@ -54,6 +54,8 @@ chmod [mode=421 ] [文件或目录]  # 第二种方式变更权限
 
 ![加上数字权限](./img/permission/permission__2024-10-24-11-29-50.png)
 
+![改变属主](./img/permission/permission__2024-10-24-11-32-33.png)
+
 ## chown
 
 改变所有者
@@ -67,7 +69,18 @@ chown [选项] [最终用户] [文件或目录]
 | :--- | -------- |
 | -R   | 递归操作 |
 
-![改变属主](./img/permission/permission__2024-10-24-11-32-33.png)
+```shell
+[root@localhost ~]# chown test11 anaconda-ks.cfg
+[root@localhost ~]# ll
+总用量 24
+-rwxrwxrwx. 1 test11 test33  1086 10月 22 23:13 anaconda-ks.cfg
+-rw-r--r--. 1 root   root    1428 4月  11 2023 Centos-altarch-7.repo
+lrwxrwxrwx. 1 root   root       6 11月  2 16:45 ln.log -> ls.log
+-rw-r--r--. 1 root   root       6 11月  2 16:45 ls.log
+drwxr-xr-x. 2 root   root       6 11月  2 16:16 mvtest
+-rw-r--r--. 1 root   root   10240 10月 24 07:12 test.tar
+[root@localhost ~]#
+```
 
 ## chgrp
 
@@ -75,4 +88,17 @@ chown [选项] [最终用户] [文件或目录]
 
 ```shell
 chgrp [最终用户组] [文件或目录]  # 改变文件或者目录的所属组
+```
+
+```shell
+[root@localhost ~]# chgrp test33 anaconda-ks.cfg
+[root@localhost ~]# ll
+总用量 24
+-rwxrwxrwx. 1 test11 test33  1086 10月 22 23:13 anaconda-ks.cfg
+-rw-r--r--. 1 root   root    1428 4月  11 2023 Centos-altarch-7.repo
+lrwxrwxrwx. 1 root   root       6 11月  2 16:45 ln.log -> ls.log
+-rw-r--r--. 1 root   root       6 11月  2 16:45 ls.log
+drwxr-xr-x. 2 root   root       6 11月  2 16:16 mvtest
+-rw-r--r--. 1 root   root   10240 10月 24 07:12 test.tar
+[root@localhost ~]#
 ```

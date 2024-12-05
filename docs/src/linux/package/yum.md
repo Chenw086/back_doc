@@ -104,3 +104,18 @@ extundelete.x86_64 : An ext3 and ext4 file system undeletion utility
 [root@node5 ~]# yum groupinstall 'Compatibility Libraries' -y
 
 ```
+
+## 查看已经安装的软件包
+
+```shell
+# 查看已经安装的软件包
+[root@node5 ~]# yum list installed
+```
+
+::: warning 提示
+然后搜索信息就都用 rpm 来操作即可
+
+因为 yum 是基于 rpm 实现的，所以 yum 可以做的事情，rpm 都可以做
+
+yum 只是提供了一个更方便的使用方式
+:::
