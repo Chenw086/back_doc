@@ -194,7 +194,9 @@ export default defineConfig({
 				{
 					text: '基础',
 					collapsed: true,
-					items: [{ text: '环境配置', link: '/node/base/' }]
+					items: [{ text: '简介', link: '/node/base/' },
+						{ text: '模块', link: '/node/base/common' },
+					]
 				},
 				{
 					text: 'koa',
