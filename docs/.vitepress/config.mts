@@ -60,6 +60,11 @@ export default defineConfig({
 				activeMatch: '/linux/'
 			},
 			{
+				text: 'docker',
+				link: '/docker/',
+				activeMatch: '/docker/'
+			},
+			{
 				text: 'nginx',
 				link: '/nginx/',
 				activeMatch: '/nginx/'
@@ -133,7 +138,7 @@ export default defineConfig({
 						{ text: 'rpm', link: '/linux/package/rpm' },
 						{ text: 'yum', link: '/linux/package/yum' },
 						{ text: 'source', link: '/linux/package/source' },
-						{ text: 'brew', link: '/linux/package/brew' },
+						{ text: 'brew', link: '/linux/package/brew' }
 					]
 				},
 				{
@@ -141,7 +146,7 @@ export default defineConfig({
 					collapsed: true,
 					items: [
 						{ text: 'wget', link: '/linux/request/wget' },
-						{ text: 'curl', link: '/linux/request/curl' },
+						{ text: 'curl', link: '/linux/request/curl' }
 					]
 				},
 				{
@@ -186,6 +191,24 @@ export default defineConfig({
 					link: '/nginx/'
 				}
 			],
+			'/docker/': [
+				{
+					text: '开始',
+					link: '/docker/'
+				},
+				{
+					text: '基础',
+					collapsed: true,
+					items: [
+						{ text: '命令', link: '/docker/base/order' },
+						{ text: '存储', link: '/docker/base/save' },
+						{ text: '网络', link: '/docker/base/network' },
+						{ text: '最佳实践', link: '/docker/base/best' },
+						{ text: 'compose', link: '/docker/base/compose' },
+						{ text: 'file', link: '/docker/base/file' },
+					]
+				}
+			],
 			'/node/': [
 				{
 					text: '开始',
@@ -194,8 +217,9 @@ export default defineConfig({
 				{
 					text: '基础',
 					collapsed: true,
-					items: [{ text: '简介', link: '/node/base/' },
-						{ text: '模块', link: '/node/base/common' },
+					items: [
+						{ text: '简介', link: '/node/base/' },
+						{ text: '模块', link: '/node/base/common' }
 					]
 				},
 				{
