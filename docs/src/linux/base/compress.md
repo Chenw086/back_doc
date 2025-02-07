@@ -87,6 +87,7 @@ drwxr-xr-x. 2 root root    6 10月 24 06:29 adir
 -rw-r--r--. 1 root root    0 10月 24 01:57 chenwei
 -rw-r--r--. 1 root root  146 10月 23 08:34 wget-1.14-18.el7_6.1.x86_64.rpm
 
+# 文件和目录打包到 test.tar 文件中
 [root@localhost ~]# tar -cvf test.tar a adir/
 a
 adir/

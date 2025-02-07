@@ -4,6 +4,14 @@ title: linux - 系统管理
 
 # 系统管理
 
+::: info 参考
+[csdn - 全面讲解](https://blog.csdn.net/skh2015java/article/details/94012643)
+
+[定义服务](https://juejin.cn/post/6989174247172079629)
+
+[定义服务](https://juejin.cn/post/7315846728732999718)
+:::
+
 ## 进程与服务
 
 Process：计算机中，一个正在执行的程序或命令，叫做进程

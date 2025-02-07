@@ -14,6 +14,48 @@ date [OPTION] ... [+FORMAT]
 | -s<日期时间>    | 设置系统日期时间                               |
 | <+日期时间格式> | 指定显示时使用的日期时间格式                   |
 
+## 系统时区问题
+
+```shell
+timedatectl	# 查看时区
+
+timedatectl set-timezone Asia/Shanghai	# 设置时区
+```
+
+同步系统时间
+
+```shell
+timedatectl set-ntp true	# 同步系统时间
+```
+
+chrony 是 ntp 的升级版，可以解决 ntp 的一些问题
+
+```shell
+yum install -y chrony	# 安装 chrony
+
+systemctl start chronyd	# 启动 chrony
+
+systemctl enable chronyd	# 设置开机自启动
+```
+
+- 查看 chrony 状态
+
+```shell
+chronyc sources -v	# 查看 chrony 状态
+```
+
+- 检查同步状态
+
+```shell
+chronyc tracking	# 检查同步状态
+```
+
+- 手动同步状态
+
+```shell
+chronyc -a makestep	# 手动同步状态
+```
+
 ## 显示当前时间
 
 ```shell

@@ -9,6 +9,18 @@ title: linux - source
 :::
 
 - 新增 epel 源
+> epel-release 软件包是 Extra Packages for Enterprise Linux（EPEL）项目的一部分，主要用于为基于 Red Hat 系列的 Linux 发行版（如 RHEL、CentOS、AlmaLinux、Rocky Linux 等）提供额外的软件包源。
+
+::: details epel-release 详细说明
+**拓展软件包库**: 企业级 Linux 发行版（如 RHEL、CentOS）为了保证系统的稳定性和兼容性，自带的软件包数量和版本可能相对有限。EPEL 项目提供了大量额外的高质量软件包，这些软件包经过了严格测试，并且与企业级 Linux 发行版保持兼容。安装 epel-release 后，就可以通过系统的包管理器（如 yum 或 dnf）方便地安装这些额外的软件包
+
+**获取更新的软件版本**: EPEL 项目会定期更新软件包，以确保它们与最新的软件版本保持一致。通过安装 epel-release，用户可以方便地获取到这些更新后的软件包，从而保持系统的安全性和功能性
+
+**软件包包含的内容**: epel-release 软件包本身不包含任何实际的软件，它只是一个元数据包，用于标识和配置 EPEL 源。EPEL 源中包含的实际软件包由 EPEL 项目维护，这些软件包通常包括各种开发工具、库、框架和应用程序，以满足企业级 Linux 发行版的需求
+
+**安装方法**: 安装 epel-release 软件包通常通过系统的包管理器（如 yum 或 dnf）进行。安装后，系统会自动配置 yum 或 dnf 使用 EPEL 源，从而可以方便地安装 EPEL 源中的软件包，安装该软件包后，会在 /etc/yum.repos.d/ 目录下创建一个 EPEL 源的配置文件（例如 epel.repo），系统的包管理器会根据这个配置文件从 EPEL 源中获取软件包信息。
+:::
+
 
 ```shell
 # 当前位置

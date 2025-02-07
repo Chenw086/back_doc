@@ -288,3 +288,17 @@ history  # 查看已经执行过历史命令
 
 history -c  # 清空历史命令
 ```
+
+## tail
+
+::: info 资料
+[官方](https://wangchujiang.com/linux-command/c/tail.html)
+
+[csdn](https://blog.csdn.net/CPOHUI/article/details/107740294)
+:::
+
+## sed
+
+::: info 资料
+[官方](https://wangchujiang.com/linux-command/c/sed.html)
+:::
