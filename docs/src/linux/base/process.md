@@ -109,6 +109,14 @@ root        20     2  0 10月23 ?      00:00:00 [kworker/1:0H-ev]
 
 ## kill
 
+::: info 资料
+[官方](https://wangchujiang.com/linux-command/c/kill.html)
+
+[菜鸟 - 这个好点](https://www.runoob.com/linux/linux-comm-kill.html)
+
+[csdn](https://blog.csdn.net/lechengyuyuan/article/details/16337233)
+:::
+
 ```shell
 kill [选项] 进程号 （功能描述：通过进程号杀死进程）
 killall 进程名称 （功能描述：通过进程名称杀死进程，也支持通配符，这在系统因负载过大而变得很慢时很有用）
@@ -150,9 +158,9 @@ netstat –nlp | grep 端口号 （功能描述：查看网络端口号占用情
 
 | 选项 | 功能                                                 |
 | :--- | ---------------------------------------------------- |
-| -t   | 显示 tcp 端口 |
-| -u   | 显示 udp 端口 |
+| -t   | 显示 tcp 端口                                        |
+| -u   | 显示 udp 端口                                        |
 | -l   | 仅列出在监听的服务状态                               |
 | -p   | 表示显示哪个进程在调用                               |
-| -n   | 以数字形式显示地址和端口号            |
+| -n   | 以数字形式显示地址和端口号                           |
 | -a   | 显示所有正在监听（listen）和未监听的套接字（socket） |

@@ -128,7 +128,8 @@ export default defineConfig({
 						{ text: '搜索查找', link: '/linux/base/search' },
 						{ text: '解压缩', link: '/linux/base/compress' },
 						{ text: '进程管理', link: '/linux/base/process' },
-						{ text: '定时任务', link: '/linux/base/scheduled' }
+						{ text: '定时任务', link: '/linux/base/scheduled' },
+						{ text: '防火墙', link: '/linux/base/firewalld' }
 					]
 				},
 				{
@@ -189,6 +190,12 @@ export default defineConfig({
 				{
 					text: '开始',
 					link: '/nginx/'
+				},
+				{
+					text: '基础',
+					items: [
+						{ text: '全局快', link: '/nginx/base/' },
+					]
 				}
 			],
 			'/docker/': [
@@ -205,7 +212,7 @@ export default defineConfig({
 						{ text: '网络', link: '/docker/base/network' },
 						{ text: '最佳实践', link: '/docker/base/best' },
 						{ text: 'compose', link: '/docker/base/compose' },
-						{ text: 'file', link: '/docker/base/file' },
+						{ text: 'file', link: '/docker/base/file' }
 					]
 				}
 			],

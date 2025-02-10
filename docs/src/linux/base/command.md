@@ -242,6 +242,12 @@ head -n n 文件
 
 ## tail
 
+::: info 资料
+[官方](https://wangchujiang.com/linux-command/c/tail.html)
+
+[csdn](https://blog.csdn.net/CPOHUI/article/details/107740294)
+:::
+
 输出文件尾部内容,默认输出后 10 行内容
 
 其余内容和 head 一样，但是新增了一个 -f 选项，实时追踪文档的所有更新。
@@ -289,16 +295,14 @@ history  # 查看已经执行过历史命令
 history -c  # 清空历史命令
 ```
 
-## tail
-
-::: info 资料
-[官方](https://wangchujiang.com/linux-command/c/tail.html)
-
-[csdn](https://blog.csdn.net/CPOHUI/article/details/107740294)
-:::
-
 ## sed
 
 ::: info 资料
 [官方](https://wangchujiang.com/linux-command/c/sed.html)
+:::
+
+## tree
+
+::: info 资料
+[官方](https://wangchujiang.com/linux-command/c/tree.html)
 :::
