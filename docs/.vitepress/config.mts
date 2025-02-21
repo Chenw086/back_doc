@@ -17,7 +17,7 @@ export default defineConfig({
 			infoLabel: '信息',
 			detailsLabel: '详细信息'
 		},
-		lineNumbers: false, // 行号
+		lineNumbers: true, // 行号
 		image: {
 			// 默认禁用图片懒加载
 			lazyLoading: true
@@ -194,7 +194,11 @@ export default defineConfig({
 				{
 					text: '基础',
 					items: [
-						{ text: '全局快', link: '/nginx/base/' },
+						{ text: '全局快', link: '/nginx/base/index' },
+						{ text: '静态资源处理', link: '/nginx/base/static' },
+						{ text: '重写', link: '/nginx/base/rewrite' },
+						{ text: '反向代理', link: '/nginx/base/proxy' },
+						{ text: '负载均衡', link: '/nginx/base/loadbalance' }
 					]
 				}
 			],

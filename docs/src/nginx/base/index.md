@@ -325,7 +325,7 @@ default_type application/octet-stream;
 | 语法 | default_type MIME 类型   |
 | ---- | ------------------------ |
 | 默认 | application/octet-stream |
-| 位置 | http                     |
+| 位置 | http、server、location   |
 
 在 default_type 之前还有一句 include mime.types
 
@@ -381,6 +381,12 @@ log_format 指令用于配置 nginx 的日志格式，语法如下
 ```nginx
 log_format 日志格式名称 日志格式
 ```
+
+::: danger log_format 参考文档
+[官方](https://docshome.gitbook.io/nginx-docs/he-xin-gong-neng/http/ngx_http_log_module)
+
+[博客园](https://www.cnblogs.com/kevingrace/p/5893499.html)
+:::
 
 ### sendfile
 
