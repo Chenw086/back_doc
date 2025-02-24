@@ -199,7 +199,8 @@ export default defineConfig({
 						{ text: '重写', link: '/nginx/base/rewrite' },
 						{ text: '反向代理', link: '/nginx/base/proxy' },
 						{ text: '负载均衡', link: '/nginx/base/loadbalance' },
-						{ text: '缓存', link: '/nginx/base/cache' }
+						{ text: '缓存', link: '/nginx/base/cache' },
+						{ text: '集群搭建', link: '/nginx/base/cluster' },
 					]
 				}
 			],
