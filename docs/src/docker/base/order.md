@@ -281,6 +281,12 @@ fee2689f0a87   nginx     "/docker-entrypoint.…"   2 minutes ago   Up 2 minutes
 # 进入容器
 [root@docker_12-17 ~]# docker exec -it mynginx /bin/bash
 
+# docker exec：这个命令用于在已经运行的容器中执行命令。
+# -i：表示交互模式（interactive），允许你在容器中输入命令。
+# -t：分配一个伪终端（pseudo-TTY），使得终端输出格式化得更好，适合交互式会话。
+# mynginx：这是容器的名称或 ID，表示你希望在这个特定的容器中执行命令。
+# /bin/bash：这是要在容器中执行的命令，启动一个 Bash shell
+
 # 查看文件，可以看到这个容器就是一个完整的 linux 环境
 root@fee2689f0a87:/# ls /
 bin  boot  dev  docker-entrypoint.d  docker-entrypoint.sh  etc  home  lib  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
@@ -343,9 +349,10 @@ Options:
 ```shell [提交然后查看]
 [root@docker_12-17 ~]# docker commit -m "update index.html" mynginx mynginx:v1.0
 sha256:d116bce96b9648e8750e5f410fab4c215f7c1013929d974e6008e65f7c9897d8
-# -m 提交的信息
-# mynginx 容器的名字
-# mynginx:v1.0 仓库的名字和标签
+# docker commit：这个命令用于创建一个新的镜像，基于指定的容器的当前状态。
+# -m "update index.html"：提供一条提交信息，描述这次提交的更改内容。在这个例子中，提交信息是“update index.html”，用于记录这次提交的目的或内容。
+# mynginx：这是要基于其状态创建新镜像的容器名称或 ID。
+# mynginx:v1.0：这是新镜像的名称和标签。mynginx 是镜像的名称，v1.0 是镜像的标签，表示这个镜像的版本
 
 # 可以看到刚才提交的镜像
 [root@docker_12-17 ~]# docker images

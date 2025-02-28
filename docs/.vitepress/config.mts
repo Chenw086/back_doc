@@ -55,19 +55,25 @@ export default defineConfig({
 				activeMatch: '/node/'
 			},
 			{
-				text: 'linux',
-				link: '/linux/',
-				activeMatch: '/linux/'
-			},
-			{
-				text: 'docker',
-				link: '/docker/',
-				activeMatch: '/docker/'
-			},
-			{
-				text: 'nginx',
-				link: '/nginx/',
-				activeMatch: '/nginx/'
+				text: '服务器',
+				activeMatch: '/linux|docker|nginx/',
+				items: [
+					{
+						text: 'linux',
+						link: '/linux/',
+						activeMatch: '/linux/'
+					},
+					{
+						text: 'docker',
+						link: '/docker/',
+						activeMatch: '/docker/'
+					},
+					{
+						text: 'nginx',
+						link: '/nginx/',
+						activeMatch: '/nginx/'
+					}
+				]
 			},
 			{
 				text: '数据库',
@@ -200,7 +206,7 @@ export default defineConfig({
 						{ text: '反向代理', link: '/nginx/base/proxy' },
 						{ text: '负载均衡', link: '/nginx/base/loadbalance' },
 						{ text: '缓存', link: '/nginx/base/cache' },
-						{ text: '集群搭建', link: '/nginx/base/cluster' },
+						{ text: '集群搭建', link: '/nginx/base/cluster' }
 					]
 				}
 			],
@@ -211,14 +217,15 @@ export default defineConfig({
 				},
 				{
 					text: '基础',
-					collapsed: true,
+					collapsed: false,
 					items: [
 						{ text: '命令', link: '/docker/base/order' },
 						{ text: '存储', link: '/docker/base/save' },
 						{ text: '网络', link: '/docker/base/network' },
 						{ text: '最佳实践', link: '/docker/base/best' },
 						{ text: 'compose', link: '/docker/base/compose' },
-						{ text: 'file', link: '/docker/base/file' }
+						{ text: 'file', link: '/docker/base/file' },
+						{ text: 'dockerfile', link: '/docker/base/docker_file' }
 					]
 				}
 			],

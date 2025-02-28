@@ -11,7 +11,7 @@ title: docker - 说明
 
 ## 基础说明
 
-### 作用：
+### 作用
 
 1. 跨平台安装同一套环境
 
@@ -72,6 +72,8 @@ sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin d
 ```shell
 # 启动& 开机启动docker； enable + start 二合一
 systemctl enable docker --now
+
+# --now：这个选项会立即启动 Docker 服务，而不仅仅是设置为开机自启动。也就是说，执行这条命令后，Docker 服务会立即开始运行
 ```
 
 5. 配置加速源地址
@@ -90,5 +92,8 @@ sudo tee /etc/docker/daemon.json <<-'EOF'
 }
 EOF
 sudo systemctl daemon-reload # 重新加载配置
+# 重新加载配置文件：当你对 systemd 的服务单元文件（如 .service 文件）进行修改后，需要执行这条命令以使 systemd 重新读取这些配置文件。这样，systemd 才能应用新的配置
+# 不影响正在运行的服务：执行这条命令不会中断或重启正在运行的服务，它只是更新 systemd 的配置缓存
+
 sudo systemctl restart docker  # 重启docker
 ```

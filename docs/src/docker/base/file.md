@@ -37,6 +37,12 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 
 # 构建镜像 这里的 . 代表的是当前目录
 [root@docker_12-17 ~]# docker build -f dockerfile -t myjavaapp:v1.0 .
+
+# docker build：这是 Docker 的一个命令，用于根据 Dockerfile 构建一个新的镜像
+# -f dockerfile：指定 Dockerfile 文件
+# -t myjavaapp:v1.0：指定镜像名称和版本
+# .：指定构建上下文，这里是指当前目录
+
 [+] Building 244.9s (7/7) FINISHED                                                                                                                                                                                                                                                            docker:default
  => [internal] load build definition from dockerfile                                                                                                                                                                                                                                                    0.0s
  => => transferring dockerfile: 211B                                                                                                                                                                                                                                                                    0.0s

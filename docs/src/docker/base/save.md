@@ -65,6 +65,8 @@ index.html
 
 ::: danger 注意
 如果在容器内部修改 /usr/share/nginx/html/ 目录下的文件，会覆盖掉宿主机的目录下的文件，因为是同一个目录
+
+这里很重要，务必记住
 :::
 
 ## 卷映射
@@ -99,6 +101,8 @@ nginx: [emerg] open() "/etc/nginx/nginx.conf" failed (2: No such file or directo
 ![卷映射](./img/save/save__2024-12-18-00-25-03.png){width="50%"}
 
 上图就是创建一个名为 ngconf 的卷，他会自己定义存储的位置
+
+`具体如何定义在下面有介绍`
 
 ```shell
 [root@docker_12-17 nghtml]# docker run -d -p 99:80 -v /app/nghtml:/usr/share/nginx/html -v ngconf:/etc/nginx --name app03 nginx
@@ -168,8 +172,82 @@ local     ngconf
 ]
 ```
 
+```shell [备份卷]
+   docker run --rm \
+     -v myvolume:/volume \
+     -v /path/to/backup:/backup \
+     busybox \
+     tar cvf /backup/myvolume-backup.tar /volume
+
+# 命令解释：
+
+# docker run --rm：创建一个临时容器，并在容器退出后自动删除
+# -v myvolume:/volume：将卷 myvolume 挂载到容器的 /volume 目录
+# -v /path/to/backup:/backup：将主机上的 /path/to/backup 目录挂载到容器的 /backup 目录
+# busybox：使用 busybox 镜像作为基础镜像
+# tar cvf /backup/myvolume-backup.tar /volume：将卷 myvolume 的内容打包到主机上的 /path/to/backup/myvolume-backup.tar 文件中
+
+```
+
+```shell [恢复卷]
+docker run --rm \
+  -v /path/to/backup:/backup \
+  -v myvolume:/volume \
+  busybox \
+  tar xvf /backup/myvolume-backup.tar -C /volume
+
+# 命令解释：
+
+# docker run --rm：创建一个临时容器，并在容器退出后自动删除
+# -v /path/to/backup:/backup：将主机上的 /path/to/backup 目录挂载到容器的 /backup 目录
+# -v myvolume:/volume：将卷 myvolume 挂载到容器的 /volume 目录
+# busybox：使用 busybox 镜像作为基础镜像
+# tar xvf /backup/myvolume-backup.tar -C /volume：将主机上的 /path/to/backup/myvolume-backup.tar 文件解压到卷 myvolume 的 /volume 目录中
+
+```
+
 :::
 
 ::: warning 注意
 使用容器 run 创建的卷，在删除容器的时候，卷不会被删除，需要手动删除
 :::
+
+## 异同
+
+卷映射和目录挂载在功能上有很多重叠的地方，但它们在某些方面有不同的特性和适用场景。以下是一些卷映射可以实现而目录挂载不能轻松实现的功能，以及反之亦然的情况：
+
+**卷映射优势**
+
+- 数据持久化管理
+
+独立于容器生命周期：卷的数据独立于容器的生命周期，删除容器不会影响卷中的数据。虽然目录挂载也能持久化数据，但卷提供了更好的管理工具
+
+Docker 管理：卷由 Docker 管理，提供了命令行工具来创建、删除和管理卷。这使得备份、迁移和共享数据更加方便
+
+- 性能优化
+
+优化存储：卷通常存储在 Docker 主机上特定的文件系统中，可能会有性能优化，特别是在某些存储驱动下
+
+- 跨平台一致性
+
+平台无关：卷在不同的操作系统上表现一致，而目录挂载可能会因为文件系统的差异而表现不同
+
+- 安全性
+
+隔离性：卷的使用可以限制对主机文件系统的直接访问，提供更好的安全性，特别是在多用户环境中
+
+**目录挂载优势**
+
+- 灵活性和直接访问
+
+直接访问主机文件系统：目录挂载允许直接访问和修改主机文件系统中的文件，这对于开发和调试非常有用
+
+无需 Docker 管理：用户可以完全控制挂载的目录和文件，适合需要频繁修改的场景。
+
+- 即时同步
+
+实时更新：在开发环境中，代码或配置文件的更改可以立即反映在容器中，无需重启容器。
+
+- 使用现有文件结构
+
+利用现有目录：可以直接使用主机上的现有目录和文件结构，而不需要额外的配置或管理。
