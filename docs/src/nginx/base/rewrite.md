@@ -386,8 +386,6 @@ server {
 
 执行完当前的重写操作后，停止在当前 location 内继续执行后续的 rewrite 规则，但不会重新按照其他 location 配置进行匹配
 
-![](./img/rewrite/rewrite__2025-02-19-19-36-11.png)
-
 当客户端请求 /rewrite/val ，重写为 /val 后，不会再执行当前 location 内的其他 rewrite 规则，但是也不会重新去匹配其他 location
 
 3. redirect

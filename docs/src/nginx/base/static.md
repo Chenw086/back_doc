@@ -603,13 +603,15 @@ http {
 
 404 的时候就会跳转到 https://www.baidu.com
 
-2. 可以指定具体跳转的地址
+2. 可以指定具体返回的网页
+
+![](./img/static/static__2025-03-03-19-34-18.png){width=90%}
 
 ```nginx
 error_page 404 /404.html;
 ```
 
-3. 使用 location 的 @ 符号完成符号信息展示
+1. 使用 location 的 @ 符号完成符号信息展示
 
 ```nginx {24-28}
 worker_processes  1;
