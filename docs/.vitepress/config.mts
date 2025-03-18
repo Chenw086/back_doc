@@ -159,7 +159,12 @@ export default defineConfig({
 				{
 					text: '场景与问题',
 					collapsed: true,
-					items: [{ text: '开始', link: '/linux/problem/' }]
+					items: [{ text: '开始', link: '/linux/problem/index' }]
+				},
+				{
+					text: 'devOps',
+					collapsed: true,
+					items: [{ text: 'jenkins', link: '/linux/cicd/index' }]
 				}
 			],
 			'/mongodb/': [
