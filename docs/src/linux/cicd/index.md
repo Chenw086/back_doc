@@ -9,6 +9,8 @@ title: linux - jenkins
 - [Docker 文档](/docker/){target="_blank"}
 - [linux 文档](/linux/){target="_blank"}
 - [nginx 文档](/nginx/){target="_blank"}
+- [ssh](https://wangdoc.com/ssh/)
+- [shell](https://wangdoc.com/bash/)
 
 参考文档与问题解决文档：
 
