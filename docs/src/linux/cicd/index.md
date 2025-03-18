@@ -10,6 +10,17 @@ title: linux - jenkins
 - [linux 文档](/linux/){target="_blank"}
 - [nginx 文档](/nginx/){target="_blank"}
 
+参考文档与问题解决文档：
+
+- [ssh 密钥](https://blog.csdn.net/qq_36551991/article/details/135849346?spm=1001.2014.3001.5501)
+- [Publish Over SSH](https://cloud.tencent.com/developer/article/2028098)
+- [ssh server](https://blog.csdn.net/qq_36551991/article/details/135848943)
+- [jenkins 插件安装失败解决方法](https://blog.csdn.net/m0_37679452/article/details/105556186)
+- [jenkins 时区问题](https://blog.csdn.net/bbj12345678/article/details/115046606)
+- [volume挂载本机文件出现不同步的问题解决](https://blog.csdn.net/qq_43684922/article/details/128882189)
+- [nginx 配置](https://juejin.cn/post/6942607113118023710#heading-60)
+- [jenkins 配置](https://juejin.cn/post/7306038680963383311?searchId=20250315202154D0592A6FB865A1361DA1#heading-18)
+
 :::
 
 对于 devops 的概念， 事实上下面这一张图已经解释很清晰
